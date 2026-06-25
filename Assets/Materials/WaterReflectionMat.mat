@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: WaterReflectionMat
+  m_Shader: {fileID: 4800000, guid: 5bde9d65d1f76a348a30919602ad8b7b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _Alpha: 0
+    - _ChromaticAberration: 0.002
+    - _DistortionFalloff: 1
+    - _FadeEnd: 1
+    - _FadeStart: 0
+    - _FlipY: 1
+    - _ScanlineStrength: 0.15
+    - _Time2: 0
+    - _UseFade: 1
+    - _WaveFreqX: 6
+    - _WaveFreqY: 4
+    - _WaveSpeed: 1.2
+    - _WaveStrength: 0.008
+    m_Colors:
+    - _TintColor: {r: 0.2899999, g: 0.62, b: 1, a: 0}
+  m_BuildTextureStacks: []

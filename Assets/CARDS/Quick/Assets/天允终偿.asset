@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41e206fc57f453a42b932de9e94caabf, type: 3}
+  m_Name: "\u5929\u5141\u7EC8\u507F"
+  m_EditorClassIdentifier: 
+  CardName: "\u5929\u5141\u7EC8\u507F"
+  Description: 
+  CardImage: {fileID: 21300000, guid: 2cc37bebb7353974ca31da4680522950, type: 3}
+  CardBackImage: {fileID: 21300000, guid: 833f919d0c63c844d8e21e0f070ffe95, type: 3}
+  NameAnimated: 1
+  NameAnimTag: wave
+  NameColor: {r: 1, g: 1, b: 1, a: 1}
+  NameUsePalette: 1
+  CardType: 1
+  ModuleType: 0
+  Health: 0
+  Attack: 0
+  CooldownTurns: 0
+  MissileCount: 3
+  SplashDamage: 5
+  SplashRange: 0
+  DroneType: 0
+  DronesToSpawn: 0
+  DroneAttack: 0
+  DroneHeal: 0
+  DroneHealth: 10
+  BuildSlots: 0
+  ModuleScriptName: 
+  ModuleScriptParam: 0
+  RainbowGlowWhenPlayable: 0
+  UsableTiming: 0
+  RequiresTarget: 0
+  Effects:
+  - EffectType: 21
+    Target: 0
+    "\u6570\u503C": 0
+    "\u968F\u673A\u6700\u5927\u503C": 0
+    "\u65E0\u4EBA\u673A\u6570\u91CF": 0
+    "\u65E0\u4EBA\u673A\u7C7B\u578B": 0
+    ScriptName: TianYunZhongChang
+    ScriptParam1: 0
+    ScriptParam2: 0
+    "\u6548\u679C\u8BF4\u660E": "\u8D50\u4F60\u5E0C\u671B\uFF01"
+  OnPlayDialogues:
+  - Speaker: 1
+    Line: "<shake><palette>\u5929\u5141\u7EC8\u507F\uFF01"
+  - Speaker: 0
+    Line: "<shake><color=red>\u611A\u8822!"

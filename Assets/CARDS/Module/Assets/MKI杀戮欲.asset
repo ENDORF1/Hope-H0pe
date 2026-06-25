@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41e206fc57f453a42b932de9e94caabf, type: 3}
+  m_Name: "MKI\u6740\u622E\u6B32"
+  m_EditorClassIdentifier: 
+  CardName: "MKI\u6740\u622E\u6B32"
+  Description: 
+  CardImage: {fileID: 21300000, guid: ccad67063fbdc8e49b2a96e581d49551, type: 3}
+  CardBackImage: {fileID: 21300000, guid: 1a998f32764e99244859161524b9c403, type: 3}
+  NameAnimated: 0
+  NameAnimTag: waving
+  NameColor: {r: 1, g: 1, b: 1, a: 1}
+  NameUsePalette: 0
+  CardType: 0
+  ModuleType: 4
+  Health: 20
+  Attack: 0
+  CooldownTurns: 0
+  MissileCount: 0
+  SplashDamage: 0
+  SplashRange: 0
+  DroneType: 0
+  DronesToSpawn: 2
+  DroneAsset: {fileID: 11400000, guid: 761926e4cd003364a9e7dc2e60afc75b, type: 2}
+  DroneAttack: 5
+  DroneHeal: 0
+  DroneHealth: 5
+  BuildSlots: 0
+  DroneScriptName: 
+  ModuleScriptName: 
+  ModuleScriptParam: 0
+  CanAttack: 0
+  AttackBehavior: 0
+  RainbowGlowWhenPlayable: 0
+  UsableTiming: 0
+  RequiresTarget: 0
+  Effects: []
+  OnPlayDialogues: []

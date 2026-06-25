@@ -1,0 +1,448 @@
+#if UNITY_EDITOR
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using TMPro;
+
+/// <summary>
+/// 角色卡 Prefab 搭建工具。
+///
+/// 菜单：XiWang → Setup → Build CharacterCard Prefab
+///
+/// 生成的 Prefab 结构（400 × 600）：
+///
+///   CharacterCard（Root，400×600，挂 CharacterCardUI + CanvasGroup）
+///     ├─ GlowBorder（发光边框 Image，inset -8，初始透明）
+///     └─ TiltRoot（倾斜容器 RectTransform，Hover 3D 倾斜作用在这里）
+///          ├─ CardBack（卡背根节点，翻面后隐藏）
+///          │    ├─ BackBG（深色背景 Image）
+///          │    ├─ BackGrid（网格线 Image，低透明度）
+///          │    ├─ BackText_Main（"MAKE A WISH" TMP，倾斜，蓝色）
+///          │    ├─ BackText_Sub（"Hope · Faction" TMP，小字）
+///          │    └─ BackInkLine（蓝色墨水线装饰 Image）
+///          └─ CardFace（卡面根节点）
+///               ├─ PortraitArea（立绘区，高420）
+///               │    ├─ PortraitBG（底色 Image）
+///               │    ├─ PortraitImage（立绘 Image，替换 Sprite）
+///               │    ├─ PortraitGradient（底部渐变遮罩 Image）
+///               │    └─ HPBadge（左上角HP角标）
+///               │         ├─ HPBadgeBG（Image）
+///               │         └─ HPText（TMP）
+///               └─ InfoArea（信息栏，高180）
+///                    ├─ InfoBG（深色背景 Image）
+///                    ├─ TopDivider（顶部蓝色分割线 Image）
+///                    ├─ NameText（角色名 TMP，大字）
+///                    ├─ RoleText（职位 TMP，小字）
+///                    └─ HPBarRow（HP条行）
+///                         ├─ HPLabel（"HP" TMP）
+///                         ├─ HPBarBG（底条 Image）
+///                         │    └─ HPBarFill（填充 Image）
+///                         └─ HPValue（数值 TMP）
+///
+/// 保存路径：Assets/Prefabs/UI/CharacterCard.prefab
+/// </summary>
+public class CharacterCardPrefabBuilder : EditorWindow
+{
+    private string _savePath = "Assets/Prefabs/UI";
+
+    [MenuItem("XiWang/Setup/Build CharacterCard Prefab")]
+    public static void ShowWindow()
+    {
+        var w = GetWindow<CharacterCardPrefabBuilder>("角色卡 Prefab 搭建");
+        w.minSize = new Vector2(360, 200);
+        w.Show();
+    }
+
+    void OnGUI()
+    {
+        GUILayout.Label("角色卡 Prefab 搭建（400 × 600）", EditorStyles.boldLabel);
+        EditorGUILayout.Space(6);
+
+        _savePath = EditorGUILayout.TextField("保存路径", _savePath);
+
+        EditorGUILayout.Space(8);
+        EditorGUILayout.HelpBox(
+            "生成后需手动完成：\n" +
+            "  · 替换 PortraitImage 的 Sprite 为角色立绘\n" +
+            "  · 把生成的 Prefab 拖入 CharacterSelectManager → Card Prefab",
+            MessageType.Info);
+
+        EditorGUILayout.Space(8);
+        GUI.backgroundColor = new Color(0.4f, 0.75f, 1f);
+        bool clicked = GUILayout.Button("▶  一键生成 CharacterCard Prefab", GUILayout.Height(42));
+        GUI.backgroundColor = Color.white;
+
+        if (clicked) Build();
+    }
+
+    // ─────────────────────────────────────────────────
+    void Build()
+    {
+        // 确保目录存在
+        if (!AssetDatabase.IsValidFolder(_savePath))
+        {
+            // 递归创建文件夹
+            string[] parts = _savePath.Split('/');
+            string current = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = current + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next))
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                current = next;
+            }
+        }
+
+        // ── 颜色常量（Hope蓝 + 暗色系）──
+        Color hopeBlue      = new Color(0.12f, 0.56f, 1f,  1f);
+        Color hopeBlueAlpha = new Color(0.12f, 0.56f, 1f,  0f);  // 初始透明
+        Color darkBg        = new Color(0.05f, 0.05f, 0.05f, 1f);
+        Color darkerBg      = new Color(0.03f, 0.03f, 0.03f, 1f);
+        Color white0        = new Color(1f, 1f, 1f, 0f);
+        Color white10       = new Color(1f, 1f, 1f, 0.1f);
+        Color white20       = new Color(1f, 1f, 1f, 0.2f);
+        Color white40       = new Color(1f, 1f, 1f, 0.4f);
+        Color white80       = new Color(1f, 1f, 1f, 0.8f);
+
+        // ── 根节点 ──
+        var root = new GameObject("CharacterCard");
+        var rootRT = root.AddComponent<RectTransform>();
+        rootRT.sizeDelta = new Vector2(400f, 600f);
+        root.AddComponent<CanvasGroup>();
+
+        var cardUI = root.AddComponent<CharacterCardUI>();
+
+        // ── GlowBorder ──
+        var glowGO  = CreateChild(root, "GlowBorder");
+        var glowRT  = glowGO.GetComponent<RectTransform>();
+        glowRT.anchorMin = Vector2.zero;
+        glowRT.anchorMax = Vector2.one;
+        glowRT.offsetMin = new Vector2(-8f, -8f);
+        glowRT.offsetMax = new Vector2( 8f,  8f);
+        var glowImg = glowGO.AddComponent<Image>();
+        glowImg.color         = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0f);
+        glowImg.raycastTarget = false;
+        // 空心矩形效果：用 Sliced + 透明中心，简单起见先用普通Image，靠outline体现
+        // 实际使用时可替换为空心圆角矩形Sprite
+
+        // ── TiltRoot ──
+        var tiltGO = CreateChild(root, "TiltRoot");
+        var tiltRT = tiltGO.GetComponent<RectTransform>();
+        SetFullStretch(tiltRT);
+
+        // ── CardBack ──
+        var backGO = CreateChild(tiltGO, "CardBack");
+        var backRT = backGO.GetComponent<RectTransform>();
+        SetFullStretch(backRT);
+
+        // BackBG
+        var backBgGO  = CreateChild(backGO, "BackBG");
+        var backBgImg = backBgGO.AddComponent<Image>();
+        backBgImg.color         = darkBg;
+        backBgImg.raycastTarget = false;
+        SetFullStretch(backBgGO.GetComponent<RectTransform>());
+
+        // BackGrid（网格线，低透明度叠加感）
+        var gridGO  = CreateChild(backGO, "BackGrid");
+        var gridImg = gridGO.AddComponent<Image>();
+        gridImg.color         = white10;
+        gridImg.raycastTarget = false;
+        SetFullStretch(gridGO.GetComponent<RectTransform>());
+        // 备注：替换为你的网格线 Sprite 可获得更好效果
+
+        // BackText_Main（"MAKE A WISH"）
+        var mainTxtGO  = CreateChild(backGO, "BackText_Main");
+        var mainTxtRT  = mainTxtGO.GetComponent<RectTransform>();
+        mainTxtRT.anchorMin        = new Vector2(0.5f, 0.5f);
+        mainTxtRT.anchorMax        = new Vector2(0.5f, 0.5f);
+        mainTxtRT.anchoredPosition = new Vector2(-10f, 20f);
+        mainTxtRT.sizeDelta        = new Vector2(320f, 140f);
+        mainTxtRT.localRotation    = Quaternion.Euler(0f, 0f, -7f);
+        var mainTMP = mainTxtGO.AddComponent<TextMeshProUGUI>();
+        mainTMP.text                = "MAKE\nA WISH";
+        mainTMP.fontSize            = 52f;
+        mainTMP.fontStyle           = FontStyles.Bold;
+        mainTMP.color               = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0.55f);
+        mainTMP.alignment           = TextAlignmentOptions.Center;
+        mainTMP.raycastTarget       = false;
+        mainTMP.enableWordWrapping  = false;
+
+        // BackText_Sub
+        var subTxtGO  = CreateChild(backGO, "BackText_Sub");
+        var subTxtRT  = subTxtGO.GetComponent<RectTransform>();
+        subTxtRT.anchorMin        = new Vector2(0.5f, 0.5f);
+        subTxtRT.anchorMax        = new Vector2(0.5f, 0.5f);
+        subTxtRT.anchoredPosition = new Vector2(0f, -60f);
+        subTxtRT.sizeDelta        = new Vector2(300f, 40f);
+        var subTMP = subTxtGO.AddComponent<TextMeshProUGUI>();
+        subTMP.text           = "Hope · Faction";
+        subTMP.fontSize       = 18f;
+        subTMP.color          = white20;
+        subTMP.alignment      = TextAlignmentOptions.Center;
+        subTMP.characterSpacing = 4f;
+        subTMP.raycastTarget  = false;
+
+        // BackInkLine（蓝色墨水装饰线）
+        var inkGO  = CreateChild(backGO, "BackInkLine");
+        var inkRT  = inkGO.GetComponent<RectTransform>();
+        inkRT.anchorMin        = new Vector2(0.5f, 0f);
+        inkRT.anchorMax        = new Vector2(0.5f, 1f);
+        inkRT.anchoredPosition = new Vector2(30f, 0f);
+        inkRT.sizeDelta        = new Vector2(1.5f, 0f);
+        var inkImg = inkGO.AddComponent<Image>();
+        inkImg.color         = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0.15f);
+        inkImg.raycastTarget = false;
+
+        // ── CardFace ──
+        var faceGO = CreateChild(tiltGO, "CardFace");
+        var faceRT = faceGO.GetComponent<RectTransform>();
+        SetFullStretch(faceRT);
+
+        // ── PortraitArea（高420，占70%）──
+        var portraitAreaGO = CreateChild(faceGO, "PortraitArea");
+        var portraitAreaRT = portraitAreaGO.GetComponent<RectTransform>();
+        portraitAreaRT.anchorMin = new Vector2(0f, 180f / 600f);
+        portraitAreaRT.anchorMax = Vector2.one;
+        portraitAreaRT.offsetMin = Vector2.zero;
+        portraitAreaRT.offsetMax = Vector2.zero;
+
+        // PortraitBG
+        var pBgGO  = CreateChild(portraitAreaGO, "PortraitBG");
+        var pBgImg = pBgGO.AddComponent<Image>();
+        pBgImg.color         = new Color(0.06f, 0.06f, 0.06f, 1f);
+        pBgImg.raycastTarget = false;
+        SetFullStretch(pBgGO.GetComponent<RectTransform>());
+
+        // PortraitImage（替换 Sprite 为立绘）
+        var portraitGO  = CreateChild(portraitAreaGO, "PortraitImage");
+        var portraitRT  = portraitGO.GetComponent<RectTransform>();
+        SetFullStretch(portraitRT);
+        var portraitImg = portraitGO.AddComponent<Image>();
+        portraitImg.color             = white40;
+        portraitImg.preserveAspect    = true;
+        portraitImg.raycastTarget     = false;
+        // 备注：运行时替换 portraitImg.sprite = CharacterAsset.Portrait
+
+        // PortraitGradient（底部渐变遮罩，让立绘下方自然过渡到信息栏）
+        var gradGO  = CreateChild(portraitAreaGO, "PortraitGradient");
+        var gradRT  = gradGO.GetComponent<RectTransform>();
+        gradRT.anchorMin = Vector2.zero;
+        gradRT.anchorMax = new Vector2(1f, 0.35f);
+        gradRT.offsetMin = Vector2.zero;
+        gradRT.offsetMax = Vector2.zero;
+        var gradImg = gradGO.AddComponent<Image>();
+        gradImg.color         = darkBg;
+        gradImg.raycastTarget = false;
+        // 备注：替换为从透明到darkBg的渐变Sprite效果更好
+
+        // HPBadge（左上角）
+        var badgeGO = CreateChild(portraitAreaGO, "HPBadge");
+        var badgeRT = badgeGO.GetComponent<RectTransform>();
+        badgeRT.anchorMin        = new Vector2(0f, 1f);
+        badgeRT.anchorMax        = new Vector2(0f, 1f);
+        badgeRT.pivot            = new Vector2(0f, 1f);
+        badgeRT.anchoredPosition = new Vector2(10f, -10f);
+        badgeRT.sizeDelta        = new Vector2(90f, 38f);
+
+        var badgeBgGO  = CreateChild(badgeGO, "HPBadgeBG");
+        var badgeBgImg = badgeBgGO.AddComponent<Image>();
+        badgeBgImg.color         = new Color(0f, 0f, 0f, 0.75f);
+        badgeBgImg.raycastTarget = false;
+        SetFullStretch(badgeBgGO.GetComponent<RectTransform>());
+
+        var badgeOutlineGO  = CreateChild(badgeGO, "HPBadgeOutline");
+        var badgeOutlineImg = badgeOutlineGO.AddComponent<Image>();
+        badgeOutlineImg.color         = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0.4f);
+        badgeOutlineImg.raycastTarget = false;
+        SetFullStretch(badgeOutlineGO.GetComponent<RectTransform>());
+        // 备注：替换为空心矩形Sprite效果更好
+
+        var hpBadgeTxtGO  = CreateChild(badgeGO, "HPText");
+        var hpBadgeTxtRT  = hpBadgeTxtGO.GetComponent<RectTransform>();
+        SetFullStretch(hpBadgeTxtRT);
+        var hpBadgeTMP = hpBadgeTxtGO.AddComponent<TextMeshProUGUI>();
+        hpBadgeTMP.text      = "150";
+        hpBadgeTMP.fontSize  = 22f;
+        hpBadgeTMP.fontStyle = FontStyles.Bold;
+        hpBadgeTMP.color     = hopeBlue;
+        hpBadgeTMP.alignment = TextAlignmentOptions.Center;
+        hpBadgeTMP.raycastTarget = false;
+
+        // ── InfoArea（高180，占30%）──
+        var infoGO = CreateChild(faceGO, "InfoArea");
+        var infoRT = infoGO.GetComponent<RectTransform>();
+        infoRT.anchorMin = Vector2.zero;
+        infoRT.anchorMax = new Vector2(1f, 180f / 600f);
+        infoRT.offsetMin = Vector2.zero;
+        infoRT.offsetMax = Vector2.zero;
+
+        // InfoBG
+        var infoBgGO  = CreateChild(infoGO, "InfoBG");
+        var infoBgImg = infoBgGO.AddComponent<Image>();
+        infoBgImg.color         = darkerBg;
+        infoBgImg.raycastTarget = false;
+        SetFullStretch(infoBgGO.GetComponent<RectTransform>());
+
+        // TopDivider（蓝色分割线）
+        var divGO  = CreateChild(infoGO, "TopDivider");
+        var divRT  = divGO.GetComponent<RectTransform>();
+        divRT.anchorMin = new Vector2(0f, 1f);
+        divRT.anchorMax = new Vector2(1f, 1f);
+        divRT.offsetMin = new Vector2(0f, -2f);
+        divRT.offsetMax = Vector2.zero;
+        var divImg = divGO.AddComponent<Image>();
+        divImg.color         = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0.8f);
+        divImg.raycastTarget = false;
+
+        // NameText
+        var nameGO  = CreateChild(infoGO, "NameText");
+        var nameRT  = nameGO.GetComponent<RectTransform>();
+        nameRT.anchorMin        = new Vector2(0f, 0.55f);
+        nameRT.anchorMax        = new Vector2(1f, 1f);
+        nameRT.offsetMin        = new Vector2(16f, -8f);
+        nameRT.offsetMax        = new Vector2(-16f, -12f);
+        var nameTMP = nameGO.AddComponent<TextMeshProUGUI>();
+        nameTMP.text             = "Eudora";
+        nameTMP.fontSize         = 40f;
+        nameTMP.fontStyle        = FontStyles.Bold;
+        nameTMP.color            = Color.white;
+        nameTMP.alignment        = TextAlignmentOptions.Left;
+        nameTMP.raycastTarget    = false;
+        nameTMP.enableWordWrapping = false;
+        nameTMP.overflowMode     = TextOverflowModes.Ellipsis;
+
+        // RoleText
+        var roleGO  = CreateChild(infoGO, "RoleText");
+        var roleRT  = roleGO.GetComponent<RectTransform>();
+        roleRT.anchorMin        = new Vector2(0f, 0.38f);
+        roleRT.anchorMax        = new Vector2(1f, 0.58f);
+        roleRT.offsetMin        = new Vector2(16f, 0f);
+        roleRT.offsetMax        = new Vector2(-16f, 0f);
+        var roleTMP = roleGO.AddComponent<TextMeshProUGUI>();
+        roleTMP.text           = "Hope · Leader";
+        roleTMP.fontSize       = 18f;
+        roleTMP.color          = white40;
+        roleTMP.alignment      = TextAlignmentOptions.Left;
+        roleTMP.characterSpacing = 3f;
+        roleTMP.raycastTarget  = false;
+
+        // HPBarRow
+        var hpRowGO = CreateChild(infoGO, "HPBarRow");
+        var hpRowRT = hpRowGO.GetComponent<RectTransform>();
+        hpRowRT.anchorMin = new Vector2(0f, 0.05f);
+        hpRowRT.anchorMax = new Vector2(1f, 0.36f);
+        hpRowRT.offsetMin = new Vector2(16f, 0f);
+        hpRowRT.offsetMax = new Vector2(-16f, 0f);
+
+        // HPLabel
+        var hpLblGO  = CreateChild(hpRowGO, "HPLabel");
+        var hpLblRT  = hpLblGO.GetComponent<RectTransform>();
+        hpLblRT.anchorMin = new Vector2(0f, 0f);
+        hpLblRT.anchorMax = new Vector2(0f, 1f);
+        hpLblRT.offsetMin = Vector2.zero;
+        hpLblRT.offsetMax = new Vector2(40f, 0f);
+        var hpLblTMP = hpLblGO.AddComponent<TextMeshProUGUI>();
+        hpLblTMP.text          = "HP";
+        hpLblTMP.fontSize      = 18f;
+        hpLblTMP.color         = new Color(hopeBlue.r, hopeBlue.g, hopeBlue.b, 0.7f);
+        hpLblTMP.alignment     = TextAlignmentOptions.Left;
+        hpLblTMP.raycastTarget = false;
+
+        // HPBarBG
+        var barBgGO  = CreateChild(hpRowGO, "HPBarBG");
+        var barBgRT  = barBgGO.GetComponent<RectTransform>();
+        barBgRT.anchorMin = new Vector2(0f, 0.3f);
+        barBgRT.anchorMax = new Vector2(0.82f, 0.7f);
+        barBgRT.offsetMin = new Vector2(48f, 0f);
+        barBgRT.offsetMax = Vector2.zero;
+        var barBgImg = barBgGO.AddComponent<Image>();
+        barBgImg.color         = white10;
+        barBgImg.raycastTarget = false;
+
+        // HPBarFill
+        var barFillGO  = CreateChild(barBgGO, "HPBarFill");
+        var barFillRT  = barFillGO.GetComponent<RectTransform>();
+        SetFullStretch(barFillRT);
+        var barFillImg = barFillGO.AddComponent<Image>();
+        barFillImg.color         = hopeBlue;
+        barFillImg.type          = Image.Type.Filled;
+        barFillImg.fillMethod    = Image.FillMethod.Horizontal;
+        barFillImg.fillOrigin    = 0;
+        barFillImg.fillAmount    = 1f;
+        barFillImg.raycastTarget = false;
+
+        // HPValue
+        var hpValGO  = CreateChild(hpRowGO, "HPValue");
+        var hpValRT  = hpValGO.GetComponent<RectTransform>();
+        hpValRT.anchorMin = new Vector2(0.82f, 0f);
+        hpValRT.anchorMax = Vector2.one;
+        hpValRT.offsetMin = new Vector2(4f, 0f);
+        hpValRT.offsetMax = Vector2.zero;
+        var hpValTMP = hpValGO.AddComponent<TextMeshProUGUI>();
+        hpValTMP.text          = "150";
+        hpValTMP.fontSize      = 20f;
+        hpValTMP.fontStyle     = FontStyles.Bold;
+        hpValTMP.color         = hopeBlue;
+        hpValTMP.alignment     = TextAlignmentOptions.Right;
+        hpValTMP.raycastTarget = false;
+
+        // ── 绑定 CharacterCardUI 的引用 ──
+        var so = new SerializedObject(cardUI);
+        so.FindProperty("nameText").objectReferenceValue    = nameTMP;
+        so.FindProperty("roleText").objectReferenceValue    = roleTMP;
+        so.FindProperty("hpText").objectReferenceValue      = hpBadgeTMP;
+        so.FindProperty("portraitImage").objectReferenceValue = portraitImg;
+        so.FindProperty("hpBarFill").objectReferenceValue   = barFillImg;
+        so.FindProperty("cardBackRoot").objectReferenceValue = backGO;
+        so.FindProperty("glowBorder").objectReferenceValue  = glowImg;
+        so.FindProperty("tiltRoot").objectReferenceValue    = tiltRT;
+        so.ApplyModifiedProperties();
+        EditorUtility.SetDirty(root);
+
+        // ── 存为 Prefab ──
+        string prefabPath = _savePath + "/CharacterCard.prefab";
+        GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        Object.DestroyImmediate(root);
+
+        AssetDatabase.Refresh();
+
+        if (prefab != null)
+        {
+            EditorUtility.DisplayDialog("完成",
+                $"CharacterCard Prefab 已保存至：\n{prefabPath}\n\n" +
+                "接下来：\n" +
+                "  1. 把此 Prefab 拖入 CharacterSelectManager → Card Prefab\n" +
+                "  2. 游戏运行时会自动用 CharacterAsset 填充数据",
+                "OK");
+
+            // 在 Project 窗口高亮选中
+            Selection.activeObject = prefab;
+            EditorGUIUtility.PingObject(prefab);
+        }
+        else
+        {
+            EditorUtility.DisplayDialog("失败", $"Prefab 保存失败，路径：{prefabPath}", "OK");
+        }
+    }
+
+    // ─────────────────────────────────────────────────
+    // 工具方法
+    // ─────────────────────────────────────────────────
+
+    static GameObject CreateChild(GameObject parent, string name)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent.transform, false);
+        return go;
+    }
+
+    static void SetFullStretch(RectTransform rt)
+    {
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+    }
+}
+#endif

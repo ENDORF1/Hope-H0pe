@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags: []
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - ReflectionContent
+  - OppositeContent
+  - ReflectionContent
+  - NoReflection
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Cards
+    uniqueID: 312300155
+    locked: 0
+  - name: BattleField
+    uniqueID: 3875785753
+    locked: 0
+  - name: Above Everything
+    uniqueID: 2035046861
+    locked: 0
+  - name: Above Above Everything
+    uniqueID: 1061922471
+    locked: 0
+  - name: CardGlow
+    uniqueID: 4152956901
+    locked: 0
+  - name: For3DEffects
+    uniqueID: 1759161911
+    locked: 0

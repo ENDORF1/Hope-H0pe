@@ -1,0 +1,324 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using TMPro;
+using DG.Tweening;
+
+/// <summary>
+/// 单张角色卡的 UI 组件。
+/// 职责：
+///   1. 从 CharacterAsset 读取数据并刷新显示
+///   2. 处理 Hover（3D 倾斜）和 Click（通知 Manager）
+///   3. 提供飞入、翻面、消散、坠落等动画接口
+/// 不负责选择逻辑，全部交给 CharacterSelectManager。
+/// </summary>
+public class CharacterCardUI : MonoBehaviour,
+    IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+{
+    // ─────────────────────────────────────────────────
+    // Inspector 引用（由 Editor 脚本自动填，或手动拖入）
+    // ─────────────────────────────────────────────────
+
+    [Header("卡面 UI")]
+    [Tooltip("角色名 TMP")]
+    public TextMeshProUGUI nameText;
+
+    [Tooltip("职位/角色描述 TMP")]
+    public TextMeshProUGUI roleText;
+
+    [Tooltip("HP 数值 TMP（左上角角标）")]
+    public TextMeshProUGUI hpText;
+
+    [Tooltip("立绘 Image（替换 sprite 即可）")]
+    public Image portraitImage;
+
+    [Tooltip("HP 条填充 Image")]
+    public Image hpBarFill;
+
+    [Header("卡背")]
+    [Tooltip("卡背根节点，翻面时隐藏")]
+    public GameObject cardBackRoot;
+
+    [Header("发光边框")]
+    [Tooltip("选中/Hover 时显示的发光边框 Image")]
+    public Image glowBorder;
+
+    [Header("倾斜容器")]
+    [Tooltip("3D 倾斜效果作用的子容器（TiltRoot）")]
+    public RectTransform tiltRoot;
+
+    // ─────────────────────────────────────────────────
+    // 动画参数
+    // ─────────────────────────────────────────────────
+
+    [Header("Hover 倾斜")]
+    [SerializeField] private float hoverTiltY    = -12f;
+    [SerializeField] private float hoverTiltX    =   6f;
+    [SerializeField] private float hoverLiftY    =  14f;
+    [SerializeField] private float hoverDuration =  0.18f;
+
+    [Header("飞入动画")]
+    [SerializeField] private float flyInDuration    = 0.55f;
+    [SerializeField] private float overshootAmount  = 22f;
+    [SerializeField] private float bounceDuration   = 0.28f;
+    [SerializeField] private float flipDelay        = 0.15f;
+    [SerializeField] private float flipDuration     = 0.28f;
+
+    [Header("浮动呼吸")]
+    [SerializeField] private float floatAmplitude = 7f;
+    [SerializeField] private float floatDuration  = 1.6f;
+
+    [Header("消散动画")]
+    [SerializeField] private float dismissDuration = 0.28f;
+
+    [Header("坠落动画（选中）")]
+    [SerializeField] private float sinkRiseDuration = 0.22f;
+    [SerializeField] private float sinkRiseAmount   = 28f;
+    [SerializeField] private float sinkFallDuration = 0.75f;
+    [SerializeField] private float sinkFallDistance = 320f;
+
+    // ─────────────────────────────────────────────────
+    // 运行时状态
+    // ─────────────────────────────────────────────────
+
+    public CharacterAsset Data { get; private set; }
+
+    /// <summary>在扇形中的最终落点（由 Manager 设置）</summary>
+    public Vector2 FanPosition  { get; set; }
+    /// <summary>在扇形中的最终旋转角（由 Manager 设置）</summary>
+    public float   FanRotation  { get; set; }
+
+    private CharacterSelectManager _manager;
+    private RectTransform          _rect;
+    private CanvasGroup            _cg;
+    private bool                   _interactable = false;
+    private Tween                  _floatTween;
+
+    // ─────────────────────────────────────────────────
+    void Awake()
+    {
+        _rect = GetComponent<RectTransform>();
+        _cg   = GetComponent<CanvasGroup>();
+        if (_cg == null) _cg = gameObject.AddComponent<CanvasGroup>();
+
+        if (glowBorder != null)
+        {
+            Color c = glowBorder.color; c.a = 0f;
+            glowBorder.color = c;
+        }
+    }
+
+    // ─────────────────────────────────────────────────
+    // 初始化
+    // ─────────────────────────────────────────────────
+
+    public void Init(CharacterAsset asset, CharacterSelectManager manager)
+    {
+        Data     = asset;
+        _manager = manager;
+        RefreshDisplay();
+
+        // 初始位置：屏幕右侧外
+        _rect.anchoredPosition = new Vector2(Screen.width * 1.2f, 0);
+        _rect.localRotation    = Quaternion.Euler(0, 0, 20f);
+        _cg.alpha              = 0f;
+        _interactable          = false;
+    }
+
+    // ─────────────────────────────────────────────────
+    // 数据刷新
+    // ─────────────────────────────────────────────────
+
+    public void RefreshDisplay()
+    {
+        if (Data == null) return;
+
+        if (nameText    != null) nameText.text = Data.CharacterName;
+        if (roleText    != null) roleText.text = Data.CharacterNameEn;
+        if (hpText      != null) hpText.text   = Data.MaxHealth.ToString();
+
+        if (portraitImage != null && Data.Portrait != null)
+            portraitImage.sprite = Data.Portrait;
+
+        if (hpBarFill != null)
+            hpBarFill.fillAmount = Mathf.Clamp01((float)Data.MaxHealth / 150f);
+    }
+
+    // ─────────────────────────────────────────────────
+    // 动画：飞入
+    // ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// 从屏幕右侧飞入，冲过头弹回，然后翻面。
+    /// delay：此卡开始飞入前的延迟（秒）
+    /// onComplete：翻面完成后回调
+    /// </summary>
+    public void PlayFlyIn(float delay, System.Action onComplete = null)
+    {
+        DOVirtual.DelayedCall(delay, () =>
+        {
+            // 1. 淡入 + 飞到过冲位置
+            _cg.DOFade(1f, 0.25f);
+            _rect.DOAnchorPos(
+                new Vector2(FanPosition.x - overshootAmount, FanPosition.y),
+                flyInDuration
+            ).SetEase(Ease.OutQuart).OnComplete(() =>
+            {
+                // 2. 弹回最终位置
+                _rect.DOAnchorPos(FanPosition, bounceDuration)
+                     .SetEase(Ease.OutBack)
+                     .OnComplete(() =>
+                {
+                    _rect.DOLocalRotate(new Vector3(0, 0, FanRotation), bounceDuration * 0.5f);
+
+                    // 3. 翻面
+                    DOVirtual.DelayedCall(flipDelay, () =>
+                    {
+                        FlipToFace(() =>
+                        {
+                            _interactable = true;
+                            StartFloat();
+                            onComplete?.Invoke();
+                        });
+                    });
+                });
+            });
+
+            _rect.DOLocalRotate(new Vector3(0, 0, FanRotation * 0.5f), flyInDuration)
+                 .SetEase(Ease.OutQuart);
+        });
+    }
+
+    // ─────────────────────────────────────────────────
+    // 动画：翻面（卡背 → 卡面）
+    // ─────────────────────────────────────────────────
+
+    private void FlipToFace(System.Action onComplete = null)
+    {
+        if (tiltRoot == null) { onComplete?.Invoke(); return; }
+
+        var seq = DOTween.Sequence();
+        // X轴压扁到0
+        seq.Append(tiltRoot.DOScaleX(0f, flipDuration * 0.5f).SetEase(Ease.InQuart));
+        // 切换显示
+        seq.AppendCallback(() =>
+        {
+            if (cardBackRoot != null) cardBackRoot.SetActive(false);
+        });
+        // 展开
+        seq.Append(tiltRoot.DOScaleX(1f, flipDuration * 0.5f).SetEase(Ease.OutBack));
+        seq.OnComplete(() => onComplete?.Invoke());
+    }
+
+    // ─────────────────────────────────────────────────
+    // 动画：浮动呼吸
+    // ─────────────────────────────────────────────────
+
+    public void StartFloat()
+    {
+        StopFloat();
+        _floatTween = _rect.DOAnchorPosY(FanPosition.y + floatAmplitude, floatDuration)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(-1, LoopType.Yoyo);
+    }
+
+    public void StopFloat()
+    {
+        _floatTween?.Kill();
+        _floatTween = null;
+    }
+
+    // ─────────────────────────────────────────────────
+    // 动画：消散（未选中的卡）
+    // ─────────────────────────────────────────────────
+
+    public void PlayDismiss(float delay = 0f)
+    {
+        StopFloat();
+        _interactable = false;
+
+        DOVirtual.DelayedCall(delay, () =>
+        {
+            float dir = FanPosition.x < 0 ? -1f : 1f;
+            _rect.DOAnchorPos(
+                new Vector2(FanPosition.x + dir * 60f, FanPosition.y + 30f),
+                dismissDuration
+            ).SetEase(Ease.InQuart);
+            _rect.DOLocalRotate(
+                new Vector3(0, 0, FanRotation + dir * 8f),
+                dismissDuration
+            );
+            _cg.DOFade(0f, dismissDuration * 0.85f);
+        });
+    }
+
+    // ─────────────────────────────────────────────────
+    // 动画：坠落（选中的卡）
+    // ─────────────────────────────────────────────────
+
+    public void PlaySink(System.Action onComplete = null)
+    {
+        StopFloat();
+        _interactable = false;
+
+        // 先短暂上扬
+        var seq = DOTween.Sequence();
+        seq.Append(_rect.DOAnchorPosY(FanPosition.y + sinkRiseAmount, sinkRiseDuration)
+            .SetEase(Ease.OutBack));
+        seq.Join(_rect.DOScale(1.06f, sinkRiseDuration));
+
+        // 然后猛然坠落
+        seq.Append(_rect.DOAnchorPosY(FanPosition.y - sinkFallDistance, sinkFallDuration)
+            .SetEase(Ease.InQuart));
+        seq.Join(_cg.DOFade(0f, sinkFallDuration * 0.6f).SetDelay(sinkFallDuration * 0.35f));
+
+        seq.OnComplete(() => onComplete?.Invoke());
+    }
+
+    // ─────────────────────────────────────────────────
+    // 发光边框
+    // ─────────────────────────────────────────────────
+
+    public void SetGlow(bool on)
+    {
+        if (glowBorder == null) return;
+        glowBorder.DOFade(on ? 1f : 0f, 0.2f);
+    }
+
+    // ─────────────────────────────────────────────────
+    // Pointer 事件
+    // ─────────────────────────────────────────────────
+
+    public void OnPointerEnter(PointerEventData _)
+    {
+        if (!_interactable || tiltRoot == null) return;
+        StopFloat();
+        tiltRoot.DOLocalRotate(new Vector3(hoverTiltX, hoverTiltY, 0f), hoverDuration);
+        _rect.DOAnchorPosY(FanPosition.y + hoverLiftY, hoverDuration).SetEase(Ease.OutQuart);
+        SetGlow(true);
+    }
+
+    public void OnPointerExit(PointerEventData _)
+    {
+        if (!_interactable || tiltRoot == null) return;
+        tiltRoot.DOLocalRotate(Vector3.zero, hoverDuration);
+        _rect.DOAnchorPosY(FanPosition.y, hoverDuration).SetEase(Ease.OutQuart)
+             .OnComplete(StartFloat);
+        SetGlow(false);
+    }
+
+    public void OnPointerClick(PointerEventData _)
+    {
+        if (!_interactable) return;
+        _manager?.OnCardClicked(this);
+    }
+
+    // ─────────────────────────────────────────────────
+    void OnDestroy()
+    {
+        StopFloat();
+        DOTween.Kill(_rect);
+        DOTween.Kill(_cg);
+        if (tiltRoot != null) DOTween.Kill(tiltRoot);
+    }
+}

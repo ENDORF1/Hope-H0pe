@@ -1,0 +1,174 @@
+using UnityEngine;
+using System.Collections;
+
+public class CharacterSelectEntry : MonoBehaviour
+{
+    public static CharacterSelectEntry Instance { get; private set; }
+    public static float CanvasWorldX { get; private set; } = 0f;
+
+    [Header("场景引用（自动查找，留空也可）")]
+    [SerializeField] private Camera sceneCamera;
+    [SerializeField] private Canvas sceneCanvas;
+
+    [Header("淡入时长（秒）")]
+    [SerializeField] public float fadeInDuration = 0.3f;
+
+    [Header("过渡背景")]
+    [SerializeField] private UnityEngine.UI.RawImage transitionBackground;
+    [SerializeField] private UnityEngine.UI.RawImage transitionBlackBackground;
+
+    private CanvasGroup            _canvasGroup;
+    private WorldSpaceCanvasScaler _canvasScaler;
+
+    void Awake()
+    {
+        Instance = this;
+
+        var scene = gameObject.scene;
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            if (sceneCamera == null)
+                sceneCamera = root.GetComponentInChildren<Camera>(true);
+            if (sceneCanvas == null)
+                sceneCanvas = root.GetComponentInChildren<Canvas>(true);
+            if (sceneCamera != null && sceneCanvas != null) break;
+        }
+
+        if (sceneCanvas != null)
+        {
+            _canvasGroup = sceneCanvas.GetComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = sceneCanvas.gameObject.AddComponent<CanvasGroup>();
+            _canvasScaler = sceneCanvas.GetComponent<WorldSpaceCanvasScaler>();
+        }
+
+        if (sceneCamera  != null) sceneCamera.enabled = false;
+        if (_canvasGroup != null) _canvasGroup.alpha   = 0f;
+
+        if (transitionBackground != null)
+        {
+            var c = transitionBackground.color; c.a = 1f;
+            transitionBackground.color = c;
+        }
+        if (transitionBlackBackground != null)
+        {
+            var c = transitionBlackBackground.color; c.a = 1f;
+            transitionBlackBackground.color = c;
+        }
+
+        PositionNextToTitleCanvas();
+    }
+
+    void Start()
+    {
+        if (sceneCanvas != null)
+        {
+            var scaler = sceneCanvas.GetComponent<WorldSpaceCanvasScaler>();
+            if (scaler != null) scaler.UpdateSize();
+
+            CanvasWorldX = sceneCanvas.transform.position.x;
+            Debug.Log($"[CharacterSelectEntry] CanvasWorldX = {CanvasWorldX}");
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    private void PositionNextToTitleCanvas()
+    {
+        if (sceneCanvas == null) return;
+
+        Canvas titleCanvas = null;
+        if (TitleScreenManager.Instance != null)
+        {
+            titleCanvas = TitleScreenManager.Instance.GetComponentInParent<Canvas>(true);
+            if (titleCanvas == null)
+                titleCanvas = TitleScreenManager.Instance.GetComponent<Canvas>();
+        }
+
+        if (titleCanvas == null)
+        {
+            Debug.LogWarning("[CharacterSelectEntry] 找不到主界面 Canvas，无法定位。");
+            return;
+        }
+
+        if (_canvasScaler != null)
+            _canvasScaler.lockPosition = true;
+
+        var   titleRT     = titleCanvas.GetComponent<RectTransform>();
+        float canvasWidth = titleRT.sizeDelta.x * titleRT.localScale.x;
+
+        var myRT        = sceneCanvas.GetComponent<RectTransform>();
+        myRT.position   = titleRT.position + Vector3.left * canvasWidth;
+        myRT.rotation   = titleRT.rotation;
+        myRT.localScale = titleRT.localScale;
+
+        if (sceneCamera != null && Camera.main != null && Camera.main != sceneCamera)
+        {
+            var titleCam = Camera.main;
+            sceneCamera.transform.position   = titleCam.transform.position;
+            sceneCamera.transform.rotation   = titleCam.transform.rotation;
+            sceneCamera.orthographic         = titleCam.orthographic;
+            sceneCamera.orthographicSize     = titleCam.orthographicSize;
+            sceneCamera.nearClipPlane        = titleCam.nearClipPlane;
+            sceneCamera.farClipPlane         = titleCam.farClipPlane;
+            sceneCamera.backgroundColor      = titleCam.backgroundColor;
+
+            if (_canvasScaler != null)
+                _canvasScaler.targetCamera = sceneCamera;
+        }
+
+        if (transitionBlackBackground != null)
+        {
+            transitionBlackBackground.transform.SetParent(titleCanvas.transform, true);
+            transitionBlackBackground.transform.SetAsFirstSibling();
+        }
+        if (transitionBackground != null)
+        {
+            transitionBackground.transform.SetParent(titleCanvas.transform, true);
+            transitionBackground.transform.SetSiblingIndex(1);
+            transitionBackground.material = new Material(transitionBackground.material);
+            transitionBackground.material.SetFloat("_UVOffsetX", 1f);
+        }
+    }
+
+    public void Reveal(System.Action onComplete = null)
+    {
+        StartCoroutine(RevealRoutine(onComplete));
+    }
+
+    private IEnumerator RevealRoutine(System.Action onComplete)
+    {
+        // 推镜已结束，此刻同步新相机到 TitleScene 相机的终点位置
+        if (sceneCamera != null && Camera.main != null && Camera.main != sceneCamera)
+        {
+            var titleCam = Camera.main;
+            sceneCamera.transform.position = titleCam.transform.position;
+            sceneCamera.transform.rotation = titleCam.transform.rotation;
+            sceneCamera.orthographicSize   = titleCam.orthographicSize;
+        }
+
+        if (sceneCamera != null) sceneCamera.enabled = true;
+
+        if (_canvasGroup != null)
+        {
+            float elapsed = 0f;
+            while (elapsed < fadeInDuration)
+            {
+                elapsed += Time.deltaTime;
+                _canvasGroup.alpha = Mathf.Clamp01(elapsed / fadeInDuration);
+                yield return null;
+            }
+            _canvasGroup.alpha = 1f;
+        }
+
+        if (transitionBackground != null)
+            Destroy(transitionBackground.gameObject);
+        if (transitionBlackBackground != null)
+            Destroy(transitionBlackBackground.gameObject);
+
+        onComplete?.Invoke();
+    }
+}
