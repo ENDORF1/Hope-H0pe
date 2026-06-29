@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.besty.unity-skills": {
-      "version": "file:C:/Users/pengz/Downloads/Unity-Skills-1.9.4/Unity-Skills-1.9.4/SkillsForUnity",
+      "version": "file:C:/Users/PZY/Downloads/Unity-Skills-2.0.5/Unity-Skills-2.0.5/SkillsForUnity",
       "depth": 0,
       "source": "local",
       "dependencies": {

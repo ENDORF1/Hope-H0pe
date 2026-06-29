@@ -52,5 +52,8 @@
         "com.luca3317.tmpeffects"
       ]
     }
+  ],
+  "testables": [
+    "com.besty.unity-skills"
   ]
 }
