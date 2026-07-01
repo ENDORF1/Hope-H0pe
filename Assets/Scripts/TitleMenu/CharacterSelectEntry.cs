@@ -172,7 +172,14 @@ public class CharacterSelectEntry : MonoBehaviour
             sceneCamera.orthographicSize   = titleCam.orthographicSize;
         }
 
-        if (sceneCamera != null) sceneCamera.enabled = true;
+        if (sceneCamera != null)
+        {
+            sceneCamera.enabled = true;
+            // depth=1 确保场景相机渲染在 Title 相机之上
+            // DepthOnly 不清颜色缓冲，让 Title 相机渲染的黑板透过来作为底色
+            sceneCamera.depth = 1;
+            sceneCamera.clearFlags = CameraClearFlags.Depth;
+        }
 
         // 恢复 PositionNextToTitleCanvas 覆盖的 Canvas 属性：
         // - localScale：修复 Boot 路径下场景缩放异常
@@ -199,14 +206,15 @@ public class CharacterSelectEntry : MonoBehaviour
             _canvasGroup.alpha = 1f;
         }
 
-        // 场景淡入完成，触发选角动画序列
-        var mgr = FindFirstObjectByType<CharacterSelectManager>();
-        if (mgr != null) mgr.BeginIntro();
-
+        // 淡入完成后移除黑板
         if (transitionBackground != null)
             Destroy(transitionBackground.gameObject);
         if (transitionBlackBackground != null)
             Destroy(transitionBlackBackground.gameObject);
+
+        // 场景淡入完成，触发选角动画序列
+        var mgr = FindFirstObjectByType<CharacterSelectManager>();
+        if (mgr != null) mgr.BeginIntro();
 
         onComplete?.Invoke();
     }
