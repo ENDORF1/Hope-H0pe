@@ -22,6 +22,11 @@ public class CharacterSelectEntry : MonoBehaviour
     private bool _standalone = false; // 独立运行（无 TitleScene）
     public static bool Standalone { get; private set; }
 
+    // Boot 预加载时 PositionNextToTitleCanvas 会覆盖 Canvas 的 localScale 和 Z 位置，
+    // 保存原始值在 Reveal 时恢复，保持与 Standalone 一致
+    private Vector3 _origLocalScale;
+    private float _origCanvasZ;
+
     void Awake()
     {
         Instance = this;
@@ -63,6 +68,15 @@ public class CharacterSelectEntry : MonoBehaviour
                 var c = transitionBlackBackground.color; c.a = 1f;
                 transitionBlackBackground.color = c;
             }
+
+            // 保存原始值，PositionNextToTitleCanvas 会用 Title Canvas 的值覆盖
+            if (sceneCanvas != null)
+            {
+                var rt = sceneCanvas.GetComponent<RectTransform>();
+                _origLocalScale = rt.localScale;
+                _origCanvasZ    = rt.position.z;
+            }
+
             PositionNextToTitleCanvas();
         }
     }
@@ -159,6 +173,19 @@ public class CharacterSelectEntry : MonoBehaviour
         }
 
         if (sceneCamera != null) sceneCamera.enabled = true;
+
+        // 恢复 PositionNextToTitleCanvas 覆盖的 Canvas 属性：
+        // - localScale：修复 Boot 路径下场景缩放异常
+        // - Z 位置：Title Canvas 的 Z 在 nearClip 附近（~-9.6），
+        //   卡牌 3D 倾斜时边缘会越过 nearClipPlane 被裁剪成黑色
+        if (!_standalone && sceneCanvas != null)
+        {
+            var rt = sceneCanvas.GetComponent<RectTransform>();
+            rt.localScale = _origLocalScale;
+            var pos = rt.position;
+            pos.z = _origCanvasZ;
+            rt.position = pos;
+        }
 
         if (_canvasGroup != null)
         {
