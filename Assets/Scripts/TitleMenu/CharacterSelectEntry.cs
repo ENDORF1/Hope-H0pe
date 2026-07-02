@@ -176,16 +176,11 @@ public class CharacterSelectEntry : MonoBehaviour
         if (sceneCamera != null)
         {
             sceneCamera.enabled = true;
-            // depth=1 确保场景相机渲染在 Title 相机之上
-            // DepthOnly 不清颜色缓冲，让 Title 相机渲染的黑板透过来作为底色
+            // 确保场景相机始终渲染在 Title 相机之上
             sceneCamera.depth = 1;
-            sceneCamera.clearFlags = CameraClearFlags.Depth;
         }
 
-        // 恢复 PositionNextToTitleCanvas 覆盖的 Canvas 属性：
-        // - localScale：修复 Boot 路径下场景缩放异常
-        // - Z 位置：Title Canvas 的 Z 在 nearClip 附近（~-9.6），
-        //   卡牌 3D 倾斜时边缘会越过 nearClipPlane 被裁剪成黑色
+        // 恢复 PositionNextToTitleCanvas 覆盖的 Canvas 属性
         if (!_standalone && sceneCanvas != null)
         {
             var rt = sceneCanvas.GetComponent<RectTransform>();
@@ -195,6 +190,23 @@ public class CharacterSelectEntry : MonoBehaviour
             rt.position = pos;
         }
 
+        // 把黑板从 Title Canvas 移到场景 Canvas 底层（场景相机清屏是黑色，
+        // 黑板随 CanvasGroup 淡入时叠加在黑底上视觉上始终是纯黑底色）
+        if (!_standalone)
+        {
+            if (transitionBlackBackground != null)
+            {
+                transitionBlackBackground.transform.SetParent(sceneCanvas.transform, true);
+                transitionBlackBackground.transform.SetAsFirstSibling();
+            }
+            if (transitionBackground != null)
+            {
+                transitionBackground.transform.SetParent(sceneCanvas.transform, true);
+                transitionBackground.transform.SetSiblingIndex(1);
+            }
+        }
+
+        // CanvasGroup 淡入场景 UI，黑板书于底层提供黑色底色
         if (_canvasGroup != null)
         {
             float elapsed = 0f;
