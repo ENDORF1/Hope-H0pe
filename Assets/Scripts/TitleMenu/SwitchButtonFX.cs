@@ -89,6 +89,7 @@ public class SwitchButtonFX : MonoBehaviour,
     private bool  _isHovered = false;
     private float _hoverT    = 0f;
     private float _waveT     = 0f;
+    private float _wavePhase = 0f;  // 独立相位，速度平滑过渡
     private Color _originalBgColor;
     private Color _originalTextColor;
 
@@ -186,7 +187,6 @@ public class SwitchButtonFX : MonoBehaviour,
             _hoverT, _isHovered ? 1f : 0f,
             hoverTransitionSpeed * Time.deltaTime);
 
-        // Hope阵营用字符雨+边框收缩，Void阵营用波浪+波纹——对调产生切换感
         if (_faction == TitleScreenManager.Faction.Hope)
         {
             UpdateVoidHover();
@@ -208,12 +208,23 @@ public class SwitchButtonFX : MonoBehaviour,
         _faction   = faction;
         _isHovered = false;
         _hoverT    = 0f;
+        _wavePhase = 0f;
         ApplySchemeColor(faction);
         ResetVisuals();
         ClearRipples();
     }
 
     /// <summary>设置边框透明度，供 ScreenGlitchUI 幽灵效果调用。</summary>
+    /// <summary>设置波浪层透明度，供 ScreenGlitchUI 幽灵效果调用。</summary>
+    public void SetWaveAlpha(float alpha)
+    {
+        if (_waveImage != null)
+        {
+            var c = _waveImage.color;
+            _waveImage.color = new Color(c.r, c.g, c.b, alpha);
+        }
+    }
+
     public void SetBorderAlpha(float alpha)
     {
         foreach (var border in new[] { _borderTop, _borderBottom, _borderLeft, _borderRight })
@@ -235,13 +246,18 @@ public class SwitchButtonFX : MonoBehaviour,
             ? hopeSchemeColor
             : voidSchemeColor;
 
-        // 边框颜色
+        // 边框显隐：Void 时去边框用波浪（Hope 风格 = 流动无框）
+        bool hopeStyle = (faction == TitleScreenManager.Faction.Void);
+        bool showBorders = !hopeStyle;
         foreach (var border in new[] { _borderTop, _borderBottom, _borderLeft, _borderRight })
         {
             if (border == null) continue;
+            border.gameObject.SetActive(showBorders);
             var img = border.GetComponent<Image>();
             if (img != null) img.color = _currentColor;
         }
+        if (!showBorders && _waveImage != null)
+            _waveImage.gameObject.SetActive(true);
 
         // 文字颜色
         if (_tmp != null) _tmp.color = _currentColor;
@@ -258,7 +274,8 @@ public class SwitchButtonFX : MonoBehaviour,
     {
         if (_bgImage   != null) _bgImage.color = _originalBgColor;
         if (_tmp       != null) _tmp.color     = _originalTextColor;
-        if (_waveImage != null) _waveImage.gameObject.SetActive(false);
+        if (_waveImage != null && _faction == TitleScreenManager.Faction.Hope)
+            _waveImage.gameObject.SetActive(false);
         // 重置Void状态
         _voidShrinking = false;
         _voidShrinkT   = -1f;
@@ -365,38 +382,47 @@ public class SwitchButtonFX : MonoBehaviour,
 
     private void UpdateHopeHover()
     {
-        if (_hoverT <= 0.001f)
+        // 波浪只给蓝色按钮（Void）显示
+        if (_faction != TitleScreenManager.Faction.Void)
         {
-            if (_waveImage.gameObject.activeSelf)
+            if (_waveImage != null && _waveImage.gameObject.activeSelf)
                 _waveImage.gameObject.SetActive(false);
             return;
         }
 
+        // 待机时缓慢轻柔，hover 时加速加高。待机隔帧更新减少抽搐
+        float intensity = Mathf.Lerp(0.15f, 1f, _hoverT);
+        float speedMul  = Mathf.Lerp(0.7f, 1f, _hoverT);
+
         _waveImage.gameObject.SetActive(true);
+
+        _wavePhase += Time.deltaTime * waveSpeed * speedMul;
+        if (_wavePhase > 100f) _wavePhase -= 100f;
+
 
         int W = _waveTexW, H = _waveTexH;
         var pixels = new Color32[W * H];
         Color32 wc = _waveColor;
 
-        // 像素均衡器：每列小方块从底部往上堆叠，高度由波形决定
         int cell = Mathf.Max(1, ledCellSize);
         int gap  = Mathf.Max(0, ledGapSize);
         int step = cell + gap;
-        byte ba  = (byte)(255f * _hoverT);
+        byte ba  = (byte)(255f * intensity);
 
         for (int cx = 0; cx < W; cx += step)
         {
             float sampleX = cx + cell * 0.5f;
-            float raw  = Mathf.Sin(sampleX * waveFrequency + _waveT * waveSpeed)
-                       + Mathf.Sin(sampleX * waveFrequency * 1.7f + _waveT * waveSpeed * 0.6f) * 0.5f;
-            // raw 约 -1.5~1.5，归一化到 0~1
+            float t = _wavePhase;
+            float raw  = Mathf.Sin(sampleX * waveFrequency + t)
+                       + Mathf.Sin(sampleX * waveFrequency * 1.7f + t * 0.6f) * 0.5f;
             float norm = Mathf.Clamp01((raw + 1.5f) / 3f);
-            // 最低保留 20% 高度，避免波谷时格子全灭导致闪烁
-            float barH = Mathf.Max(H * 0.2f, norm * H);
+            // 待机时最低保留 15% 高度
+            float barMin = H * Mathf.Lerp(0.05f, 0.20f, _hoverT);
+            float barH = Mathf.Max(barMin, norm * H);
 
             for (int cy = 0; cy < H; cy += step)
             {
-                if (cy + cell > barH) continue; // 超过柱高不亮
+                if (cy + cell > barH) continue;
                 for (int px = cx; px < Mathf.Min(cx + cell, W); px++)
                 for (int py = cy; py < Mathf.Min(cy + cell, H); py++)
                     pixels[py * W + px] = new Color32(wc.r, wc.g, wc.b, ba);
