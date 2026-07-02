@@ -58,10 +58,10 @@ public class MenuButtonFX : MonoBehaviour,
     [SerializeField] private int hopeNoiseCount = 60;
 
     [Tooltip("噪点方块的最小尺寸（像素）。")]
-    [SerializeField] private float hopeNoiseSizeMin = 2f;
+    [SerializeField] private float hopeNoiseSizeMin = 4f;
 
     [Tooltip("噪点方块的最大尺寸（像素）。")]
-    [SerializeField] private float hopeNoiseSizeMax = 8f;
+    [SerializeField] private float hopeNoiseSizeMax = 14f;
 
     [Tooltip("噪点方块的水平扩散范围（像素，相对按钮屏幕中心）。")]
     [SerializeField] private float hopeNoiseSpreadX = 120f;
@@ -70,13 +70,13 @@ public class MenuButtonFX : MonoBehaviour,
     [SerializeField] private float hopeNoiseSpreadY = 30f;
 
     [Tooltip("爆开阶段尾迹视觉像素长度。")]
-    [SerializeField] private float hopeTrailLengthExplode = 60f;
+    [SerializeField] private float hopeTrailLengthExplode = 120f;
 
     [Tooltip("转场推进阶段尾迹视觉像素长度。")]
-    [SerializeField] private float hopeTrailLengthSlide = 120f;
+    [SerializeField] private float hopeTrailLengthSlide = 200f;
 
     [Tooltip("相邻尾迹点间距（像素）。越小越连贯。推荐2~4。")]
-    [SerializeField] private float hopeTrailSpacing = 2.5f;
+    [SerializeField] private float hopeTrailSpacing = 2f;
 
     // ═══════════════════════════════════════════════════
     // Inspector 参数 —— 熄忘阵营
@@ -161,6 +161,9 @@ public class MenuButtonFX : MonoBehaviour,
 
     // ── Void：光标擦除位置（单位：字符索引，浮点）
     private float _wipePos = 0f;
+
+    // ── 粒子追踪鼠标
+    private Vector2 _mouseLocalPos; // 点击位置（TMP 本地坐标）
 
     // ── 通用 click 计时
     private float _clickTimer = 0f;
@@ -475,8 +478,23 @@ public class MenuButtonFX : MonoBehaviour,
                 }
                 else
                 {
-                    // 普通模式：按hopeClickDuration线性衰减
-                    _hopeParticles[i].alpha = Mathf.Max(0f, _hopeParticles[i].alpha - dt / hopeClickDuration);
+                    // 吸引到鼠标点击位置，到达后才消失
+                    float dx = _mouseLocalPos.x - _hopeParticles[i].x;
+                    float dy = _mouseLocalPos.y - _hopeParticles[i].y;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (dist > 3f)
+                    {
+                        float force = 400f / (dist + 20f);
+                        _hopeParticles[i].vx += (dx / dist) * force * dt;
+                        _hopeParticles[i].vy += (dy / dist) * force * dt;
+                        // 飞行途中慢速衰减
+                        _hopeParticles[i].alpha -= dt * 0.15f;
+                    }
+                    else
+                    {
+                        // 到达鼠标位置，快速消失
+                        _hopeParticles[i].alpha -= dt * 4f;
+                    }
                 }
 
                 if (i < _noiseRects.Count && _noiseRects[i] != null)
@@ -487,35 +505,24 @@ public class MenuButtonFX : MonoBehaviour,
                         _hopeParticles[i].alpha);
                 }
 
-                // 尾迹：把本帧路径（prevX/Y → x/y）转成屏幕坐标，插值压入历史数组
+                // 尾迹：存 TMP 本地坐标（和粒子同坐标系，镜头滑动不影响方向）
                 if (_hopeParticles[i].trailX != null)
                 {
-                    float trailPixels = _transitionMode ? hopeTrailLengthSlide : hopeTrailLengthExplode;
+                    float trailLength = _transitionMode ? hopeTrailLengthSlide : hopeTrailLengthExplode;
                     float spacing     = Mathf.Max(0.5f, hopeTrailSpacing);
                     int   maxPts      = _hopeParticles[i].trailX.Length;
 
-                    Camera cam = _canvasCamera != null ? _canvasCamera : Camera.main;
-                    // 当前和上一帧的屏幕坐标（GL像素，左上原点）
-                    Vector3 wCur  = _tmp.transform.TransformPoint(new Vector3(_hopeParticles[i].x,     _hopeParticles[i].y,     0));
-                    Vector3 wPrev = _tmp.transform.TransformPoint(new Vector3(_hopeParticles[i].prevX, _hopeParticles[i].prevY, 0));
-                    Vector2 sCur  = RectTransformUtility.WorldToScreenPoint(cam, wCur);
-                    Vector2 sPrev = RectTransformUtility.WorldToScreenPoint(cam, wPrev);
-                    sCur.y  = Screen.height - sCur.y;
-                    sPrev.y = Screen.height - sPrev.y;
+                    float dx  = _hopeParticles[i].x - _hopeParticles[i].prevX;
+                    float dy  = _hopeParticles[i].y - _hopeParticles[i].prevY;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
 
-                    float sdx  = sCur.x - sPrev.x;
-                    float sdy  = sCur.y - sPrev.y;
-                    float dist = Mathf.Sqrt(sdx * sdx + sdy * sdy);
-
-                    // 插值：从旧位置到新位置，最新点最后压入头部
                     int steps = dist < spacing ? 0 : Mathf.FloorToInt(dist / spacing);
                     for (int s = 0; s <= steps; s++)
                     {
                         float t2  = steps > 0 ? (float)s / steps : 1f;
-                        float ipx = sPrev.x + sdx * t2;
-                        float ipy = sPrev.y + sdy * t2;
+                        float ipx = _hopeParticles[i].prevX + dx * t2;
+                        float ipy = _hopeParticles[i].prevY + dy * t2;
 
-                        // 新点压入尾部：[0]最旧，[len-1]最新，GLDraw里t越大越亮
                         if (_hopeParticles[i].trailLen < maxPts)
                         {
                             _hopeParticles[i].trailX[_hopeParticles[i].trailLen] = ipx;
@@ -524,7 +531,6 @@ public class MenuButtonFX : MonoBehaviour,
                         }
                         else
                         {
-                            // 满了就把最旧的丢掉（前移），新点加到末尾
                             for (int t = 0; t < maxPts - 1; t++)
                             {
                                 _hopeParticles[i].trailX[t] = _hopeParticles[i].trailX[t + 1];
@@ -539,12 +545,13 @@ public class MenuButtonFX : MonoBehaviour,
                     float accum = 0f;
                     int   len2  = _hopeParticles[i].trailLen;
                     int   start = 0;
+                    float trailLen = _transitionMode ? hopeTrailLengthSlide : hopeTrailLengthExplode;
                     for (int t = len2 - 1; t > 0; t--)
                     {
                         float ddx = _hopeParticles[i].trailX[t] - _hopeParticles[i].trailX[t - 1];
                         float ddy = _hopeParticles[i].trailY[t] - _hopeParticles[i].trailY[t - 1];
                         accum += Mathf.Sqrt(ddx * ddx + ddy * ddy);
-                        if (accum > trailPixels) { start = t; break; }
+                        if (accum > trailLen) { start = t; break; }
                     }
                     if (start > 0)
                     {
@@ -649,6 +656,7 @@ public class MenuButtonFX : MonoBehaviour,
     {
         if (_hopeParticles == null || _hopeParticleCount == 0) return;
 
+        Camera cam = _canvasCamera != null ? _canvasCamera : Camera.main;
         GL.Begin(GL.QUADS);
         for (int i = 0; i < _hopeParticleCount; i++)
         {
@@ -668,8 +676,14 @@ public class MenuButtonFX : MonoBehaviour,
                 float s  = Mathf.Max(0.5f, ratio * 0.8f);
                 float hw = pw * s * 0.5f;
                 float hh = ph * s * 0.5f;
-                float px = _hopeParticles[i].trailX[t];
-                float py = _hopeParticles[i].trailY[t];
+
+                // 从 TMP 本地坐标转换为屏幕坐标（GL 用左上原点）
+                Vector3 world = _tmp.transform.TransformPoint(
+                    new Vector3(_hopeParticles[i].trailX[t], _hopeParticles[i].trailY[t], 0));
+                Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, world);
+                screen.y = Screen.height - screen.y;
+                float px = screen.x;
+                float py = screen.y;
 
                 GL.Color(new Color(_factionColor.r, _factionColor.g, _factionColor.b, a));
                 GL.Vertex3(px - hw, py - hh, 0);
@@ -866,9 +880,12 @@ public class MenuButtonFX : MonoBehaviour,
         _isHovered  = false;
         _clickTimer = 0f;
 
+        // 鼠标点击位置（TMP 本地坐标），用于粒子追踪
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _rect, e.position, _canvasCamera, out _mouseLocalPos);
+
         if (_faction == TitleScreenManager.Faction.Hope)
         {
-            // 转场模式：点击瞬间就通知 HopeTransition 开始协程，镜头和背景立刻启动
             if (_transitionMode && HopeTransition.Instance != null)
                 HopeTransition.Instance.BeginTransition();
 
