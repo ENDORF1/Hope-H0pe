@@ -125,6 +125,7 @@ public class MenuButtonFX : MonoBehaviour,
     private bool            _isHovered  = false;
     private bool            _isClicking = false;
     private float           _hoverAlpha = 0f;
+    private float           _idleTime   = 0f;
     private System.Action   _onClickCallback;
 
     // ── Hope：每字符抽搐状态
@@ -350,7 +351,33 @@ public class MenuButtonFX : MonoBehaviour,
         }
 
         float a = _hoverAlpha;
-        if (a <= 0.001f) { RestoreAllChars(); return; }
+        if (a <= 0.001f)
+        {
+            // 待机逐字呼吸：alpha 在 0.4~1.0 间波浪循环
+            _idleTime += Time.deltaTime;
+            _tmp.ForceMeshUpdate();
+            var ti = _tmp.textInfo;
+            for (int ci = 0; ci < ti.characterCount; ci++)
+            {
+                var ci2 = ti.characterInfo[ci];
+                if (!ci2.isVisible) continue;
+                int mi = ci2.materialReferenceIndex;
+                int vi = ci2.vertexIndex;
+                var mesh = ti.meshInfo[mi];
+                float wave = Mathf.Sin(_idleTime * 1.8f - ci * 0.5f) * 0.5f + 0.5f;
+                float alpha = Mathf.Lerp(0.4f, 1f, wave);
+                byte a2 = (byte)(alpha * 255f);
+                for (int v = 0; v < 4; v++)
+                {
+                    var col = mesh.colors32[vi + v];
+                    mesh.colors32[vi + v] = new Color32(col.r, col.g, col.b, a2);
+                }
+            }
+            _tmp.UpdateVertexData(TMP_VertexDataUpdateFlags.Colors32);
+            return;
+        }
+        _idleTime = 0f;
+        DestroyVoidCursor();
 
         EnsureJitters();
 

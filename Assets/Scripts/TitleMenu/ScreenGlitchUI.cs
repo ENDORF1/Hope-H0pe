@@ -940,6 +940,7 @@ public class ScreenGlitchUI : MonoBehaviour
             if (switchTmp      != null) switchTmp.color      = new Color(switchOrigColor.r, switchOrigColor.g, switchOrigColor.b, switchOrigColor.a * a);
             var swImg = switchButton?.GetComponent<UnityEngine.UI.Image>();
             if (swImg != null) swImg.color = new Color(switchImgOrig.r, switchImgOrig.g, switchImgOrig.b, switchImgOrig.a * a);
+            switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(a);
             yield return null;
         }
         if (titleMain     != null) titleMain.color     = new Color(titleMain.color.r,     titleMain.color.g,     titleMain.color.b,     0f);
@@ -950,6 +951,7 @@ public class ScreenGlitchUI : MonoBehaviour
         if (switchTmp      != null) switchTmp.color      = new Color(switchOrigColor.r, switchOrigColor.g, switchOrigColor.b, 0f);
         var swImg2 = switchButton?.GetComponent<UnityEngine.UI.Image>();
         if (swImg2 != null) swImg2.color = new Color(switchImgOrig.r, switchImgOrig.g, switchImgOrig.b, 0f);
+        switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(0f);
 
         // ── 阶段3：幽灵淡入 1.4~2.2s ─────────────────
         t = 0f;
@@ -999,6 +1001,7 @@ public class ScreenGlitchUI : MonoBehaviour
         if (switchTmp      != null) switchTmp.color      = switchOrigColor;
         var swImg3 = switchButton?.GetComponent<UnityEngine.UI.Image>();
         if (swImg3 != null) swImg3.color = switchImgOrig;
+        switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(1f);
         titleScreenManager?.ReleaseAllButtons();
         _voidGhostCoroutine = null;
     }
@@ -1069,6 +1072,7 @@ public class ScreenGlitchUI : MonoBehaviour
             if (switchTmp      != null) switchTmp.color      = new Color(switchOrigColor.r, switchOrigColor.g, switchOrigColor.b, switchOrigColor.a * a);
             var swImg = switchButton?.GetComponent<UnityEngine.UI.Image>();
             if (swImg != null) swImg.color = new Color(switchImgOrig.r, switchImgOrig.g, switchImgOrig.b, switchImgOrig.a * a);
+            switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(a);
             yield return null;
         }
         if (titleMain      != null) titleMain.color      = new Color(titleMain.color.r,     titleMain.color.g,     titleMain.color.b,     0f);
@@ -1079,6 +1083,7 @@ public class ScreenGlitchUI : MonoBehaviour
         if (switchTmp      != null) switchTmp.color      = new Color(switchOrigColor.r, switchOrigColor.g, switchOrigColor.b, 0f);
         var swImg2 = switchButton?.GetComponent<UnityEngine.UI.Image>();
         if (swImg2 != null) swImg2.color = new Color(switchImgOrig.r, switchImgOrig.g, switchImgOrig.b, 0f);
+        switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(0f);
 
         // ── 阶段3：幽灵淡入 1.4~2.2s ─────────────────
         t = 0f;
@@ -1139,6 +1144,7 @@ public class ScreenGlitchUI : MonoBehaviour
         if (factionLabel2  != null) factionLabel2.color  = label2OrigColor;
         var swImg3 = switchButton?.GetComponent<UnityEngine.UI.Image>();
         if (swImg3 != null) swImg3.color = switchImgOrig;
+        switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(1f);
         if (switchTmp != null)
             switchTmp.DOColor(new Color(switchOrigColor.r, switchOrigColor.g, switchOrigColor.b, 1f), 0.4f);
         titleScreenManager?.ReleaseAllButtons();
@@ -1167,6 +1173,7 @@ public class ScreenGlitchUI : MonoBehaviour
         if (swTmp2 != null) swTmp2.color = new Color(swTmp2.color.r, swTmp2.color.g, swTmp2.color.b, 1f);
         var swImg4 = switchButton?.GetComponent<UnityEngine.UI.Image>();
         if (swImg4 != null) swImg4.color = new Color(swImg4.color.r, swImg4.color.g, swImg4.color.b, 1f);
+        switchButton?.GetComponent<SwitchButtonFX>()?.SetBorderAlpha(1f);
         foreach (var go in _errorBarObjects) go.SetActive(false);
         ClearPopups();
     }

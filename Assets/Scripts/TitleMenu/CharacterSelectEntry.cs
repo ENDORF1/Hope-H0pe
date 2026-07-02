@@ -121,12 +121,16 @@ public class CharacterSelectEntry : MonoBehaviour
             _canvasScaler.lockPosition = true;
 
         var   titleRT     = titleCanvas.GetComponent<RectTransform>();
-        float canvasWidth = titleRT.sizeDelta.x * titleRT.localScale.x;
+        // 直接基于相机计算 Canvas 世界宽度，避免 WorldSpaceCanvasScaler.Start()
+        // 未执行时读到错误的 localScale，导致滑镜距离减半
+        float canvasWidth = Camera.main.orthographicSize * 2f * Screen.width / Screen.height;
 
         var myRT        = sceneCanvas.GetComponent<RectTransform>();
         myRT.position   = titleRT.position + Vector3.left * canvasWidth;
         myRT.rotation   = titleRT.rotation;
-        myRT.localScale = titleRT.localScale;
+        // 同样基于相机计算正确的 localScale
+        float correctScale = (Camera.main.orthographicSize * 2f) / titleRT.sizeDelta.y;
+        myRT.localScale = new Vector3(correctScale, correctScale, correctScale);
 
         if (sceneCamera != null && Camera.main != null && Camera.main != sceneCamera)
         {

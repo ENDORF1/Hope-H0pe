@@ -213,6 +213,21 @@ public class SwitchButtonFX : MonoBehaviour,
         ClearRipples();
     }
 
+    /// <summary>设置边框透明度，供 ScreenGlitchUI 幽灵效果调用。</summary>
+    public void SetBorderAlpha(float alpha)
+    {
+        foreach (var border in new[] { _borderTop, _borderBottom, _borderLeft, _borderRight })
+        {
+            if (border == null) continue;
+            var img = border.GetComponent<Image>();
+            if (img != null)
+            {
+                var c = img.color;
+                img.color = new Color(c.r, c.g, c.b, alpha);
+            }
+        }
+    }
+
     private void ApplySchemeColor(TitleScreenManager.Faction faction)
     {
         // Hope阵营→字符雨+红色，Void阵营→波浪+蓝色
