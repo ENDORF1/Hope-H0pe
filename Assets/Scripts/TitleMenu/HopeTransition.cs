@@ -104,15 +104,23 @@ public class HopeTransition : MonoBehaviour
         var allFX = new List<MenuButtonFX>(
             FindObjectsByType<MenuButtonFX>(FindObjectsSortMode.None));
 
-        // ── 2. 从 CharacterSelectEntry.CanvasWorldX 读 Canvas 世界X，算出推镜距离
+        // ── 2. 从 CharacterSelectEntry 读 Canvas 世界X，算出推镜距离
         float camStartX    = mainCamera != null ? mainCamera.transform.position.x : 0f;
-        float actualSlideX = camStartX - CharacterSelectEntry.CanvasWorldX;
+        float canvasWorldX = CharacterSelectEntry.CanvasWorldX;
+        // CanvasWorldX 在场景刚加载时可能还是默认值 0，直接从 Canvas 取
+        if (canvasWorldX == 0f && CharacterSelectEntry.Instance != null)
+        {
+            var entryCanvas = CharacterSelectEntry.Instance.GetComponentInChildren<Canvas>(true);
+            if (entryCanvas != null)
+                canvasWorldX = entryCanvas.transform.position.x;
+        }
+        float actualSlideX = camStartX - canvasWorldX;
         if (actualSlideX <= 0f)
         {
             actualSlideX = cameraSlideX;
             Debug.LogWarning("[HopeTransition] CanvasWorldX 未就绪，使用 Inspector 值");
         }
-        Debug.Log($"[HopeTransition] actualSlideX = {actualSlideX}");
+        Debug.Log($"[HopeTransition] canvasWorldX={canvasWorldX}, actualSlideX={actualSlideX}");
 
         // ── 3. 锁定主界面 Canvas 位置，防止它随相机移动
         if (mainCanvasScaler != null)

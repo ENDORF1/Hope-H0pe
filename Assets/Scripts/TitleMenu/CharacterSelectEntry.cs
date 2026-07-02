@@ -49,8 +49,9 @@ public class CharacterSelectEntry : MonoBehaviour
             _canvasScaler = sceneCanvas.GetComponent<WorldSpaceCanvasScaler>();
         }
 
-        // 检测是否独立运行（无 TitleScene），独立运行时不隐藏 UI
-        _standalone = (TitleScreenManager.Instance == null);
+        // 检测是否独立运行。用 FindObjectOfType 而非 Instance，避免 Awake 执行顺序
+        // 导致的竞态：预加载时 TitleScreenManager.Awake 可能晚于本脚本执行
+        _standalone = (FindFirstObjectByType<TitleScreenManager>() == null);
         Standalone  = _standalone;
 
         if (sceneCamera  != null) sceneCamera.enabled = _standalone;
