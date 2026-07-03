@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -91,10 +92,15 @@ public class HopeTransition : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    public bool IsRunning => _running;
+
     public void BeginTransition()
     {
         if (_running) return;
         _running = true;
+        // 禁用所有按钮，防止重复点击
+        foreach (var btn in FindObjectsByType<Button>(FindObjectsSortMode.None))
+            btn.interactable = false;
         StartCoroutine(TransitionRoutine());
     }
 

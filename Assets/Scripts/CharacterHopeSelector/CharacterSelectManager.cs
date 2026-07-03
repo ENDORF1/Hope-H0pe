@@ -73,7 +73,7 @@ public class CharacterSelectManager : MonoBehaviour
     public string battleSceneName = "Battle Scene";
 
     [Tooltip("选中后到切换场景的延迟（秒）")]
-    public float sceneLoadDelay = 1.8f;
+    public float sceneLoadDelay = 2.3f; // 卡飞完 1.25s + 黑屏留 1s
 
     // ─────────────────────────────────────────────────
     // 运行时
@@ -291,17 +291,13 @@ public class CharacterSelectManager : MonoBehaviour
             clicked.PlayExit();
         });
 
-        // 过渡遮罩
-        DOVirtual.DelayedCall(sceneLoadDelay - 0.4f, () =>
+        // 纯黑遮罩，提前 1 秒淡入
+        DOVirtual.DelayedCall(1.3f, () => // 卡飞完 1.25s 后开始黑屏
         {
             if (transitionOverlay != null)
             {
                 transitionOverlay.blocksRaycasts = true;
-                transitionOverlay.DOFade(1f, 0.4f).OnComplete(() =>
-                {
-                    if (transitionText != null)
-                        transitionText.DOFade(1f, 0.3f);
-                });
+                transitionOverlay.DOFade(1f, 0.4f);
             }
         });
 

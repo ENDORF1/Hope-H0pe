@@ -73,7 +73,7 @@ public class MenuButtonFX : MonoBehaviour,
     [SerializeField] private float hopeTrailLengthExplode = 120f;
 
     [Tooltip("转场推进阶段尾迹视觉像素长度。")]
-    [SerializeField] private float hopeTrailLengthSlide = 200f;
+    [SerializeField] private float hopeTrailLengthSlide = 400f;
 
     [Tooltip("相邻尾迹点间距（像素）。越小越连贯。推荐2~4。")]
     [SerializeField] private float hopeTrailSpacing = 2f;
@@ -178,20 +178,15 @@ public class MenuButtonFX : MonoBehaviour,
     }
 
     // ── 外部速度叠加（由 HopeTransition 每帧调用，让粒子跟随镜头左移）
-    private Vector2 _externalVelocity = Vector2.zero;
+    private Vector2 _pendingOffset = Vector2.zero;
 
     /// <summary>
-    /// 每帧由 HopeTransition 调用，叠加一个额外速度到所有粒子上。
-    /// velocityDelta：本帧的位移增量（本地空间单位）。
+    /// 每帧由 HopeTransition 调用，暂存镜头位移量。
+    /// 在 UpdateHopeClick 开头应用，确保拖尾包含滑镜轨迹。
     /// </summary>
     public void AddParticleOffset(Vector2 delta)
     {
-        if (_hopeParticles == null) return;
-        for (int i = 0; i < _hopeParticleCount; i++)
-        {
-            _hopeParticles[i].x += delta.x;
-            _hopeParticles[i].y += delta.y;
-        }
+        _pendingOffset += delta;
     }
 
     // ── 强制淡出（转场结束后由 HopeTransition 调用）
@@ -432,6 +427,17 @@ public class MenuButtonFX : MonoBehaviour,
 
     private void UpdateHopeClick()
     {
+        // 先应用滑镜偏移，再保存 prev，让拖尾包含镜头运动
+        if (_pendingOffset != Vector2.zero)
+        {
+            for (int i = 0; i < _hopeParticleCount; i++)
+            {
+                _hopeParticles[i].x += _pendingOffset.x;
+                _hopeParticles[i].y += _pendingOffset.y;
+            }
+            _pendingOffset = Vector2.zero;
+        }
+
         float dt = Time.deltaTime;
         _clickTimer += dt;
         float p = Mathf.Clamp01(_clickTimer / hopeClickDuration);
@@ -465,6 +471,13 @@ public class MenuButtonFX : MonoBehaviour,
                 _hopeParticles[i].x    += _hopeParticles[i].vx * dt;
                 _hopeParticles[i].y    += _hopeParticles[i].vy * dt;
 
+                // 运镜时先爆开再左飞
+                if (_transitionMode && _clickTimer > 0.35f)
+                {
+                    float t = Mathf.Clamp01((_clickTimer - 0.35f) / 0.3f);
+                    _hopeParticles[i].x -= 600f * t * dt;
+                }
+
                 if (_forceFadeOut)
                 {
                     // 强制淡出：按淡出进度衰减
@@ -472,9 +485,10 @@ public class MenuButtonFX : MonoBehaviour,
                 }
                 else if (_transitionMode)
                 {
-                    // 转场模式：速度按阻力衰减，alpha保持不变，等待StartForceFadeOut
-                    _hopeParticles[i].vx *= (1f - dt * 2f);
-                    _hopeParticles[i].vy *= (1f - dt * 2f);
+                    // 转场模式：轻阻尼 + 慢速淡出，让粒子飞够远
+                    _hopeParticles[i].vx *= (1f - dt * 1f);
+                    _hopeParticles[i].vy *= (1f - dt * 1f);
+                    _hopeParticles[i].alpha -= dt * 0.12f;
                 }
                 else
                 {
@@ -608,7 +622,7 @@ public class MenuButtonFX : MonoBehaviour,
             float dx    = px - cx;
             float dy    = py - cy;
             float dist  = Mathf.Max(1f, Mathf.Sqrt(dx * dx + dy * dy));
-            float speed = Random.Range(80f, 350f);
+            float speed = Random.Range(200f, 600f);
             float alpha = 0.3f + Random.value * 0.7f;
 
             float spacing = Mathf.Max(0.5f, hopeTrailSpacing);
