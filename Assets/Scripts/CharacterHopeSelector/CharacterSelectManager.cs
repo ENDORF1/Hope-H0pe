@@ -285,20 +285,25 @@ public class CharacterSelectManager : MonoBehaviour
             _cards[i].PlayDismiss(delay: i * 0.025f);
         }
 
-        // 选中卡：翻回卡背 → 飞升
+        // 选中卡：翻回卡背
         clicked.FlipToBack(() =>
         {
-            clicked.PlayExit();
-        });
-
-        // 纯黑遮罩，提前 1 秒淡入
-        DOVirtual.DelayedCall(1.3f, () => // 卡飞完 1.25s 后开始黑屏
-        {
-            if (transitionOverlay != null)
+            // 翻面完成，等 0.25s 让玩家看清卡背，再开始黑屏
+            DOVirtual.DelayedCall(0.25f, () =>
             {
-                transitionOverlay.blocksRaycasts = true;
-                transitionOverlay.DOFade(1f, 0.4f);
-            }
+                if (transitionOverlay != null)
+                {
+                    transitionOverlay.blocksRaycasts = true;
+                    transitionOverlay.DOFade(1f, 0.4f).OnComplete(() =>
+                    {
+                        clicked.PlayExitWithTrail();
+                    });
+                }
+                else
+                {
+                    clicked.PlayExit();
+                }
+            });
         });
 
         // 切换场景

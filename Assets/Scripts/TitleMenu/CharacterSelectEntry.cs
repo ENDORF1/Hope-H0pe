@@ -41,6 +41,10 @@ public class CharacterSelectEntry : MonoBehaviour
             if (sceneCamera != null && sceneCanvas != null) break;
         }
 
+        // 自动挂载 CardTrailRenderer（黑屏拖尾飞升用）
+        if (sceneCamera != null && sceneCamera.GetComponent<CardTrailRenderer>() == null)
+            sceneCamera.gameObject.AddComponent<CardTrailRenderer>();
+
         if (sceneCanvas != null)
         {
             _canvasGroup = sceneCanvas.GetComponent<CanvasGroup>();

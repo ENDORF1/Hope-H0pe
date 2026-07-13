@@ -172,15 +172,12 @@ public class GameManager : MonoBehaviour
         if (playerState != null) playerState.OnDeath += OnAnyPlayerDeath;
         if (aiState     != null) aiState.OnDeath     += OnAnyPlayerDeath;
 
-        // 如果有入场动画控制器，等它完成后启动；否则直接启动
+        // 如果有入场动画控制器，等它完成后启动
+        // （它会实例化战斗肖像、调用 SetPlayerPortrait/SetAiPortrait，然后调用 BeginGameLoop）
         var entrance = FindObjectOfType<HopeEntranceController>();
-        if (entrance != null)
+        if (entrance == null)
         {
-            entrance.onCompleteTarget = this;
-            entrance.onCompleteMethod = nameof(BeginGameLoop);
-        }
-        else
-        {
+            // 无入场动画（调试模式），直接启动，肖像由 FlipPortraitsOnGameStart 初始化
             StartCoroutine(GameLoop());
         }
     }
@@ -189,6 +186,20 @@ public class GameManager : MonoBehaviour
     public void BeginGameLoop()
     {
         StartCoroutine(GameLoop());
+    }
+
+    /// <summary>由 HopeEntranceController 在入场结束后调用，替换场景中的空壳肖像引用</summary>
+    public void SetPlayerPortrait(OneCardManager ocm, BetterCardRotation rot)
+    {
+        playerPortraitOCM = ocm;
+        playerPortraitRotation = rot;
+    }
+
+    /// <summary>由 HopeEntranceController 在入场结束后调用，替换场景中的空壳肖像引用</summary>
+    public void SetAiPortrait(OneCardManager ocm, BetterCardRotation rot)
+    {
+        aiPortraitOCM = ocm;
+        aiPortraitRotation = rot;
     }
 
     void OnDestroy()
@@ -562,6 +573,12 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator FlipPortraitsOnGameStart()
     {
+        // 初始化肖像图像 —— 统一入口，集中管理
+        CharacterAsset playerChar = GameData.SelectedCharacter;
+        CharacterAsset enemyChar  = FindObjectOfType<HopeEntranceController>()?.enemyCharacter;
+        playerPortraitOCM?.SetupPortraitFromCharacter(playerChar);
+        aiPortraitOCM?.SetupPortraitFromCharacter(enemyChar);
+
         // 确保卡背朝上
         playerPortraitRotation?.ShowBack();
         aiPortraitRotation?.ShowBack();

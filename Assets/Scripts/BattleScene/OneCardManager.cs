@@ -16,6 +16,41 @@ public class OneCardManager : MonoBehaviour
     /// <summary>预览窗口的 OneCardManager（悬停时同步显示）</summary>
     public OneCardManager PreviewManager;
 
+    // ── 肖像初始化 ────────────────────────────────────
+    private Image _portraitImage; // 动态添加在 CardFront 上的 Image
+
+    /// <summary>
+    /// 从 CharacterAsset 初始化战斗肖像。
+    /// 确保 BetterCardRotation.CardFront 上有 Image 组件，
+    /// 设置立绘 sprite，同时更新 CardGraphicImage 和名字。
+    /// 这是战斗场景中所有角色肖像的统一入口。
+    /// </summary>
+    public void SetupPortraitFromCharacter(CharacterAsset data)
+    {
+        if (data == null) return;
+
+        // 1. 确保 CardFront 上有 Image
+        var rotation = GetComponent<BetterCardRotation>();
+        if (rotation != null && rotation.CardFront != null)
+        {
+            _portraitImage = rotation.CardFront.GetComponent<Image>();
+            if (_portraitImage == null)
+                _portraitImage = rotation.CardFront.gameObject.AddComponent<Image>();
+
+            _portraitImage.sprite = data.Portrait;
+            _portraitImage.preserveAspect = true;
+            _portraitImage.raycastTarget = false;
+        }
+
+        // 2. 同步 CardGraphicImage
+        if (CardGraphicImage != null && data.Portrait != null)
+            CardGraphicImage.sprite = data.Portrait;
+
+        // 3. 设置角色名
+        if (NameText != null)
+            NameText.text = data.CharacterName;
+    }
+
     // ── 通用文本 ──────────────────────────────────────
     [Header("通用文本")]
     public TextMeshProUGUI NameText;

@@ -411,6 +411,85 @@ public class CharacterCardUI : MonoBehaviour,
     /// <summary>下沉退场（向下坠落，Void 用）</summary>
     public void PlaySink(System.Action onComplete = null) => PlayExit(onComplete);
 
+    // ── 拖尾飞行 ────────────────────────────────────
+    private CardTrailRenderer.Trail _activeTrail;
+    private Coroutine _trailRecordRoutine;
+
+    /// <summary>
+    /// 以拖尾模式飞升：卡面隐藏（alpha=0），在黑屏背景上仅拖尾可见。
+    /// CharacterSelectManager 在黑屏淡入完成后调用。
+    /// </summary>
+    public void PlayExitWithTrail(System.Action onComplete = null)
+    {
+        StopFloat();
+        _interactable = false;
+
+        // 隐藏卡面
+        _cg.alpha = 0f;
+        cardBackRoot.SetActive(false);
+        cardFaceRoot.SetActive(false);
+
+        // 创建拖尾
+        var renderer = CardTrailRenderer.Instance;
+        if (renderer != null)
+        {
+            Color factionColor = GameData.SelectedFaction == TitleScreenManager.Faction.Hope
+                ? new Color(0.29f, 0.62f, 1f, 1f)
+                : new Color(0.86f, 0.20f, 0.20f, 1f);
+            _activeTrail = renderer.CreateTrail(factionColor, 18f, 100);
+            _trailRecordRoutine = StartCoroutine(TrailRecordRoutine());
+        }
+
+        // 飞行动画（和 PlayExit 同样路径）
+        var anim = Data != null ? Data.ExitAnimation : null;
+        bool ascending  = anim == null || anim.direction == ExitAnimationAsset.Direction.Ascend;
+        float dipDur    = anim != null ? anim.dipDuration       : exitDipDuration;
+        float dipAmt    = anim != null ? anim.dipAmount         : exitDipAmount;
+        float flyDur    = anim != null ? anim.flyDuration       : exitFlyDuration;
+        float flyDst    = anim != null ? anim.flyDistance       : exitFlyDistance;
+        Ease  flyEase   = anim != null ? anim.flyEase           : (ascending ? Ease.OutQuart : Ease.InQuart);
+        float dipDir = ascending ? -1f : 1f;
+        float flyDir = ascending ? 1f : -1f;
+
+        if (ascending && flyDst <= 0f)
+        {
+            Canvas c = GetComponentInParent<Canvas>();
+            if (c != null)
+            {
+                float canvasH = ((RectTransform)c.transform).rect.height;
+                flyDst = Mathf.Max(exitFlyDistance,
+                    canvasH - _rect.anchoredPosition.y + _rect.rect.height + 120f);
+            }
+        }
+
+        var seq = DOTween.Sequence();
+        seq.Append(_rect.DOAnchorPosY(FanPosition.y + dipAmt * dipDir, dipDur).SetEase(Ease.InBack));
+        seq.Append(_rect.DOAnchorPosY(FanPosition.y + flyDst * flyDir, flyDur).SetEase(flyEase));
+        seq.OnComplete(() =>
+        {
+            if (_trailRecordRoutine != null) StopCoroutine(_trailRecordRoutine);
+            if (_activeTrail != null && CardTrailRenderer.Instance != null)
+                CardTrailRenderer.Instance.RemoveTrail(_activeTrail);
+            _activeTrail = null;
+            onComplete?.Invoke();
+        });
+    }
+
+    System.Collections.IEnumerator TrailRecordRoutine()
+    {
+        var canvas = GetComponentInParent<Canvas>();
+        Camera cam = canvas != null ? canvas.worldCamera : Camera.main;
+        while (_activeTrail != null && _activeTrail.active)
+        {
+            Vector3 worldCenter = _rect.TransformPoint(_rect.rect.center);
+            Vector3 screenPos = cam.WorldToScreenPoint(worldCenter);
+            _activeTrail.points.Add(new Vector2(screenPos.x, Screen.height - screenPos.y));
+            if (_activeTrail.points.Count > _activeTrail.maxPoints)
+                _activeTrail.points.RemoveAt(0);
+            yield return null;
+        }
+    }
+
     // ─────────────────────────────────────────────────
     // 发光边框
     // ─────────────────────────────────────────────────

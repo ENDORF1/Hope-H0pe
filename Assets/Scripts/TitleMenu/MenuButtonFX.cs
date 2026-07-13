@@ -73,7 +73,7 @@ public class MenuButtonFX : MonoBehaviour,
     [SerializeField] private float hopeTrailLengthExplode = 120f;
 
     [Tooltip("转场推进阶段尾迹视觉像素长度。")]
-    [SerializeField] private float hopeTrailLengthSlide = 400f;
+    [SerializeField] private float hopeTrailLengthSlide = 2000f;
 
     [Tooltip("相邻尾迹点间距（像素）。越小越连贯。推荐2~4。")]
     [SerializeField] private float hopeTrailSpacing = 2f;
@@ -485,10 +485,9 @@ public class MenuButtonFX : MonoBehaviour,
                 }
                 else if (_transitionMode)
                 {
-                    // 转场模式：轻阻尼 + 慢速淡出，让粒子飞够远
+                    // 转场模式：轻阻尼保持飞行，不自动衰减（等 StartForceFadeOut 统一淡出）
                     _hopeParticles[i].vx *= (1f - dt * 1f);
                     _hopeParticles[i].vy *= (1f - dt * 1f);
-                    _hopeParticles[i].alpha -= dt * 0.12f;
                 }
                 else
                 {
@@ -555,27 +554,30 @@ public class MenuButtonFX : MonoBehaviour,
                         }
                     }
 
-                    // 截断：从最新点往回数，超出trailPixels的旧点丢掉（前移起点）
-                    float accum = 0f;
-                    int   len2  = _hopeParticles[i].trailLen;
-                    int   start = 0;
-                    float trailLen = _transitionMode ? hopeTrailLengthSlide : hopeTrailLengthExplode;
-                    for (int t = len2 - 1; t > 0; t--)
+                    // 截断：非转场模式下限制拖尾像素长度；转场模式下不截断，让拖尾自然延伸
+                    if (!_transitionMode)
                     {
-                        float ddx = _hopeParticles[i].trailX[t] - _hopeParticles[i].trailX[t - 1];
-                        float ddy = _hopeParticles[i].trailY[t] - _hopeParticles[i].trailY[t - 1];
-                        accum += Mathf.Sqrt(ddx * ddx + ddy * ddy);
-                        if (accum > trailLen) { start = t; break; }
-                    }
-                    if (start > 0)
-                    {
-                        int newLen = len2 - start;
-                        for (int t = 0; t < newLen; t++)
+                        float accum = 0f;
+                        int   len2  = _hopeParticles[i].trailLen;
+                        int   start = 0;
+                        float trailLen = hopeTrailLengthExplode;
+                        for (int t = len2 - 1; t > 0; t--)
                         {
-                            _hopeParticles[i].trailX[t] = _hopeParticles[i].trailX[t + start];
-                            _hopeParticles[i].trailY[t] = _hopeParticles[i].trailY[t + start];
+                            float ddx = _hopeParticles[i].trailX[t] - _hopeParticles[i].trailX[t - 1];
+                            float ddy = _hopeParticles[i].trailY[t] - _hopeParticles[i].trailY[t - 1];
+                            accum += Mathf.Sqrt(ddx * ddx + ddy * ddy);
+                            if (accum > trailLen) { start = t; break; }
                         }
-                        _hopeParticles[i].trailLen = newLen;
+                        if (start > 0)
+                        {
+                            int newLen = len2 - start;
+                            for (int t = 0; t < newLen; t++)
+                            {
+                                _hopeParticles[i].trailX[t] = _hopeParticles[i].trailX[t + start];
+                                _hopeParticles[i].trailY[t] = _hopeParticles[i].trailY[t + start];
+                            }
+                            _hopeParticles[i].trailLen = newLen;
+                        }
                     }
                 }
             }
@@ -685,7 +687,7 @@ public class MenuButtonFX : MonoBehaviour,
             for (int t = 0; t < len; t++)
             {
                 float ratio = (float)(t + 1) / len;       // t=0最旧最暗，t=len-1最新最亮（O==》）
-                float a     = baseAlpha * ratio * 0.75f;
+                float a     = baseAlpha * Mathf.Max(0.35f, ratio);
                 if (a <= 0f) continue;
                 float s  = Mathf.Max(0.5f, ratio * 0.8f);
                 float hw = pw * s * 0.5f;
