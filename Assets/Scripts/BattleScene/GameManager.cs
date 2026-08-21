@@ -125,6 +125,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private bool logPhaseChanges = true;
     // 勾选后跳过所有开场动画、对话、MessageManager 等待，直接发牌进入速攻窗口
     [SerializeField] private bool skipIntroForDebug = false;
+    // 入场动画迟迟不回调时，等待多久自动开始战斗（秒）
+    [SerializeField] private float entranceTimeout = 8f;
     /// <summary>供外部调试脚本读写</summary>
     public bool SkipIntroForDebug { get => skipIntroForDebug; set => skipIntroForDebug = value; }
 
@@ -141,6 +143,7 @@ public class GameManager : MonoBehaviour
     public event Action<TurnTiming, bool> OnQuickPlayWindow;
 
     private bool _playerEndedWindow = false;
+    private bool _gameLoopStarted   = false;
     private float   _originalCameraSize;
     private Vector3 _originalCameraPos;
 
@@ -178,14 +181,33 @@ public class GameManager : MonoBehaviour
         if (entrance == null)
         {
             // 无入场动画（调试模式），直接启动，肖像由 FlipPortraitsOnGameStart 初始化
-            StartCoroutine(GameLoop());
+            BeginGameLoop();
+        }
+        else
+        {
+            StartCoroutine(EntranceWatchdog());
         }
     }
 
     /// <summary>供 HopeEntranceController 回调，启动主循环</summary>
     public void BeginGameLoop()
     {
+        if (_gameLoopStarted) return;
+        _gameLoopStarted = true;
         StartCoroutine(GameLoop());
+    }
+
+    /// <summary>
+    /// 入场动画兜底：入场控制器若因为任何原因没有回调 BeginGameLoop，
+    /// 超时后自行启动，避免整局卡在开场不动。
+    /// </summary>
+    private IEnumerator EntranceWatchdog()
+    {
+        yield return new WaitForSeconds(entranceTimeout);
+        if (_gameLoopStarted) yield break;
+
+        Debug.LogWarning($"[GameManager] 入场动画 {entranceTimeout} 秒内没有启动游戏循环，自动开始战斗。");
+        BeginGameLoop();
     }
 
     /// <summary>由 HopeEntranceController 在入场结束后调用，替换场景中的空壳肖像引用</summary>
@@ -240,6 +262,11 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.Log("[QuickStart] 跳过开场动画和进场对话，直接进入游戏");
+
+            // 跳过翻面动画也要把肖像摆成正面，否则整局都是卡背
+            SetupPortraitImages();
+            playerPortraitRotation?.ShowFront();
+            aiPortraitRotation?.ShowFront();
         }
 
         while (!IsGameOver())
@@ -571,13 +598,18 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
     }
 
-    private IEnumerator FlipPortraitsOnGameStart()
+    /// <summary>初始化双方肖像图像 —— 统一入口，集中管理</summary>
+    private void SetupPortraitImages()
     {
-        // 初始化肖像图像 —— 统一入口，集中管理
         CharacterAsset playerChar = GameData.SelectedCharacter;
         CharacterAsset enemyChar  = FindObjectOfType<HopeEntranceController>()?.enemyCharacter;
         playerPortraitOCM?.SetupPortraitFromCharacter(playerChar);
         aiPortraitOCM?.SetupPortraitFromCharacter(enemyChar);
+    }
+
+    private IEnumerator FlipPortraitsOnGameStart()
+    {
+        SetupPortraitImages();
 
         // 确保卡背朝上
         playerPortraitRotation?.ShowBack();

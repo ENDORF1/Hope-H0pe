@@ -53,6 +53,10 @@ public class HopeEntranceController : MonoBehaviour
     [Tooltip("拖入场景中的 GameManager，入场结束后自动启动游戏循环")]
     public GameManager gameManager;
 
+    [Header("直接从战斗场景启动")]
+    [Tooltip("不经过选角界面、直接运行 Battle Scene 时使用的玩家角色。留空则自动从工程中挑一个。")]
+    public CharacterAsset fallbackPlayerCharacter;
+
     private Canvas        _entranceCanvas;
     private Image         _blackOverlay;
     private RectTransform _playerCardRT;
@@ -100,8 +104,11 @@ public class HopeEntranceController : MonoBehaviour
 
     void Start()
     {
+        ResolveMissingCharacters();
+
         Debug.Log($"[HopeEntrance] Start. characterCardPrefab={characterCardPrefab}, selected={GameData.SelectedCharacter?.CharacterName}, enemy={enemyCharacter?.CharacterName}");
-        if (characterCardPrefab == null) { Debug.LogError("[HopeEntrance] characterCardPrefab 未赋值！"); return; }
+        if (characterCardPrefab == null) { SkipEntranceAndStart("characterCardPrefab 未赋值"); return; }
+        if (GameData.SelectedCharacter == null) { SkipEntranceAndStart("没有玩家角色数据"); return; }
 
         // 用场景肖像的 BoxCollider 世界空间边界自动计算飞入卡片缩放，确保落地后无跳变
         float playerScale = CalcCardScaleFromMarker(playerMarker) * flewInCardScale;
@@ -110,10 +117,10 @@ public class HopeEntranceController : MonoBehaviour
 
         _playerCardRT = CreateCard(GameData.SelectedCharacter, playerScale);
         Debug.Log($"[HopeEntrance] playerCardRT={_playerCardRT}");
-        if (_playerCardRT == null) return;
+        if (_playerCardRT == null) { SkipEntranceAndStart("玩家飞入卡片创建失败"); return; }
         _enemyCardRT = CreateCard(enemyCharacter, enemyScale);
         Debug.Log($"[HopeEntrance] enemyCardRT={_enemyCardRT}");
-        if (_enemyCardRT == null) return;
+        if (_enemyCardRT == null) { SkipEntranceAndStart("敌方飞入卡片创建失败"); return; }
 
         Vector2 playerScrPos = WorldToCanvasPos(playerMarker);
         Vector2 enemyScrPos  = WorldToCanvasPos(enemyMarker);
@@ -127,6 +134,41 @@ public class HopeEntranceController : MonoBehaviour
         // 黑屏淡出 → 开始入场
         _blackOverlay.DOFade(0f, blackFadeDuration).SetEase(Ease.OutCubic);
         PlayEntrance(playerScrPos, enemyScrPos);
+    }
+
+    /// <summary>
+    /// 补齐缺失的角色数据。
+    /// 从 Boot 正常流程进来时 GameData.SelectedCharacter 已由选角界面写好，这里什么都不做；
+    /// 直接播放 Battle Scene 时它是空的，用 fallback 顶上，否则整个入场流程会中断。
+    /// </summary>
+    void ResolveMissingCharacters()
+    {
+        if (GameData.SelectedCharacter == null)
+            GameData.EnsureSelectedCharacter(fallbackPlayerCharacter);
+
+        if (enemyCharacter == null)
+        {
+            enemyCharacter = GameData.FindAnyCharacterAsset(
+                GameData.SelectedFaction, exclude: GameData.SelectedCharacter);
+            if (enemyCharacter != null)
+                Debug.LogWarning($"[HopeEntrance] enemyCharacter 未赋值，自动使用：{enemyCharacter.CharacterName}");
+        }
+    }
+
+    /// <summary>
+    /// 入场动画无法播放时的降级路径：直接摆好肖像并启动游戏循环。
+    /// 关键是无论如何都要调用 BeginGameLoop，否则 GameManager 会一直等待入场回调，游戏卡死在黑屏。
+    /// </summary>
+    void SkipEntranceAndStart(string reason)
+    {
+        Debug.LogWarning($"[HopeEntrance] 跳过入场动画（{reason}），直接开始战斗。");
+
+        SetupBattlePortraits();
+
+        if (_entranceCanvas != null) _entranceCanvas.gameObject.SetActive(false);
+
+        if (gameManager != null) gameManager.BeginGameLoop();
+        else Debug.LogError("[HopeEntrance] 找不到 GameManager，无法启动游戏循环。");
     }
 
     /// <summary>用 marker 上 BoxCollider 的世界空间边界，算出 CharacterCardUI 在 EntranceCanvas 中需要的 scale</summary>
@@ -229,6 +271,7 @@ public class HopeEntranceController : MonoBehaviour
     {
         // ── 玩家肖像 ──────────────────────────────────
         GameObject playerPrefab = GameData.SelectedCharacter?.BattlePortraitPrefab ?? defaultPlayerPortraitPrefab;
+        if (playerPrefab == null) ShowCanvas(playerMarker); // 没有预制体：还原场景里被 Awake 隐藏的肖像
         if (playerPrefab != null && playerMarker != null)
         {
             var go = Instantiate(playerPrefab, playerMarker.position, playerMarker.rotation, playerMarker.parent);
@@ -242,6 +285,7 @@ public class HopeEntranceController : MonoBehaviour
 
         // ── 敌方肖像 ──────────────────────────────────
         GameObject enemyPrefab = enemyCharacter?.BattlePortraitPrefab ?? defaultEnemyPortraitPrefab;
+        if (enemyPrefab == null) ShowCanvas(enemyMarker);
         if (enemyPrefab != null && enemyMarker != null)
         {
             var go = Instantiate(enemyPrefab, enemyMarker.position, enemyMarker.rotation, enemyMarker.parent);
@@ -312,5 +356,11 @@ public class HopeEntranceController : MonoBehaviour
     {
         if (t == null) return;
         foreach (var c in t.GetComponentsInChildren<Canvas>(true)) c.enabled = false;
+    }
+
+    void ShowCanvas(Transform t)
+    {
+        if (t == null) return;
+        foreach (var c in t.GetComponentsInChildren<Canvas>(true)) c.enabled = true;
     }
 }
