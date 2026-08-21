@@ -1,7 +1,17 @@
 ---
 name: unity-yooasset-design
-description: "Source-anchored design rules for YooAsset v2.3.18. Load this before writing any ResourcePackage / InitializeAsync / AssetHandle / Downloader / FileSystem / AssetBundleBuilder code to avoid hallucinated APIs, PlayMode-parameter mismatch, and Handle leaks. Triggers: YooAsset, YooAssets, ResourcePackage, AssetHandle, SubAssetsHandle, AllAssetsHandle, RawFileHandle, SceneHandle, InitializeAsync, EPlayMode, EditorSimulateMode, OfflinePlayMode, HostPlayMode, WebPlayMode, CustomPlayMode, RequestPackageVersionAsync, UpdatePackageManifestAsync, ResourceDownloaderOperation, ResourceUnpackerOperation, FileSystemParameters, FileSystemParametersDefine, IDecryptionServices, IRemoteServices, IWebDecryptionServices, AssetBundleBuilder, AssetBundleCollector, BuildParameters, 资源管理, 热更新, 资源包, 资源更新, 资源下载, 资源加载, 资产管线, 资源打包, 资源构建, 包裹, 远端资源, 离线模式, 联机模式, 编辑器模拟模式, yooasset 设计, asset management, hot update, asset bundle update, asset loading, asset package, CDN resources, patch flow."
+description: Source-anchored design rules for YooAsset v2.3.18
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Writing or reviewing YooAsset code
+- Initializing packages
+- Loading assets via handles
+- Setting up hot-update/download
+- Choosing a play mode
+- 编写或审查 YooAsset 代码、初始化 package、用句柄加载资源、配置热更/下载、选择运行模式
 
 # YooAsset - Design Rules
 

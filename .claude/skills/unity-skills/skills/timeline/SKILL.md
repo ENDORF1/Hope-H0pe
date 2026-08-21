@@ -1,7 +1,15 @@
 ---
 name: unity-timeline
-description: "Unity Timeline editing: create Timeline assets, add typed tracks (animation/audio/activation/control/signal), add clips, set bindings, play/pause/stop via PlayableDirector. Triggers: timeline, cutscene, sequence, PlayableDirector, Director, track, animation track, audio track, activation track, control track, signal track, clip, playable, binding, wrap mode, editor preview, 时间轴, 过场动画, 序列, 轨道, 动画轨道, 音频轨道, 信号轨道, 剪辑, 绑定."
+description: Edit Unity Timeline assets and tracks
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Building cutscenes or sequences
+- Creating Timeline assets
+- Adding tracks and clips
+- 制作过场或序列、创建 Timeline 资产、添加轨道与片段
 
 # Timeline Skills
 
@@ -9,7 +17,7 @@ Create and modify Unity Timeline assets — add typed tracks, drop clips on trac
 
 ## Operating Mode
 
-- **Approval**（默认）：查询类 skill（`timeline_list_tracks`，源码标 `SkillMode.SemiAuto`）直接执行；其余变更/播放类（`timeline_create` / add_*_track / `timeline_add_clip` / `timeline_set_duration` / `timeline_play` / `timeline_set_binding`，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
+- **Approval**：查询类 skill（`timeline_list_tracks`，源码标 `SkillMode.SemiAuto`）直接执行；其余变更/播放类（`timeline_create` / add_*_track / `timeline_add_clip` / `timeline_set_duration` / `timeline_play` / `timeline_set_binding`，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
 - **Auto / Bypass**：未被禁列表拦截的 skill 直接执行。
 - 本模块**含 Delete 类 skill**：`timeline_remove_track` 标记为 `SkillOperation.Delete`，被 `IsForbiddenInSemi` 静态拦截 —— 仅 **Bypass** 模式或加入 **Allowlist** 才能调用。
 - `timeline_play` 仅驱动 Editor 预览（PlayableDirector.Evaluate / Play 在编辑器上下文），不会进入 Play mode。

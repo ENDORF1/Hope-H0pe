@@ -1,7 +1,15 @@
 ---
 name: unity-profiler
-description: "Read-only Unity runtime performance snapshots — FPS, frame time, batches, draw calls, triangles, vertices, memory (total/reserved/mono heap), per-asset memory (textures, meshes, materials, audio), object count by type, AssetBundle stats. Triggers: profiler, performance, performance snapshot, FPS, frame rate, frame time, memory usage, memory snapshot, total allocated memory, reserved memory, mono heap, mono used, runtime memory, texture memory, VRAM, mesh memory, material memory, audio memory, audio clip size, object count, loaded objects, asset bundle, batches, draw calls, set pass calls, triangles, vertices, rendering stats, shadow casters, benchmark, hotspot, profiler_get_stats, profiler_get_memory, profiler_get_rendering_stats, 性能, 性能快照, 帧率, FPS, 帧时间, 内存, 内存占用, Mono 堆, 显存, 纹理内存, 网格内存, 材质内存, 音频内存, 对象统计, 加载对象, AssetBundle, 批次, 绘制调用, DrawCall, SetPass, 三角面, 顶点, 渲染统计, 阴影投射."
+description: Capture read-only Unity runtime performance snapshots
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Checking runtime performance
+- Taking a profiler snapshot
+- Inspecting memory/frame stats
+- 查看运行时性能、抓取 profiler 快照、检查内存/帧率统计
 
 # Profiler Skills
 

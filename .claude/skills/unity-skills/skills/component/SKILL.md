@@ -1,7 +1,16 @@
 ---
 name: unity-component
-description: "GameObject component management. Use when users want to add, remove, list, copy, enable/disable components, or read/set component properties (Rigidbody, Collider, AudioSource, custom scripts). Triggers: component, add component, remove component, list components, set property, get properties, copy component, enable, disable, rigidbody, collider, audio source, script, MeshRenderer, propertyName, componentType, 组件, 添加组件, 移除组件, 列出组件, 设置属性, 读取属性, 复制组件, 启用, 禁用, 刚体, 碰撞体, 音源, 脚本组件."
+description: Manage GameObject components
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Attaching or removing components
+- Copying components between objects
+- Toggling components
+- Reading/writing serialized fields
+- 挂载或移除组件、在对象间复制组件、开关组件、读写序列化字段
 
 # Unity Component Skills
 
@@ -9,7 +18,7 @@ description: "GameObject component management. Use when users want to add, remov
 
 ## Operating Mode
 
-- **Approval**（默认）：本模块 Mixed —— `component_list` / `component_get_properties` 标 `SkillMode.SemiAuto`，可直接执行；写类 skill (`component_add` / `component_set_property` / `component_set_enabled` / `component_copy` 等) 标 `SkillMode.FullAuto`，需 grant 单次执行返结果。
+- **Approval**：本模块 Mixed —— `component_list` / `component_get_properties` 标 `SkillMode.SemiAuto`，可直接执行；写类 skill (`component_add` / `component_set_property` / `component_set_enabled` / `component_copy` 等) 标 `SkillMode.FullAuto`，需 grant 单次执行返结果。
 - **Auto / Bypass**：FullAuto 直接执行。
 - **含 NeverInSemi 高危 skill**：`component_remove` / `component_remove_batch`（Operation.Delete）。这些在 Approval/Auto 下返 `MODE_FORBIDDEN`，仅 Bypass 或 Allowlist 命中可调。
 
@@ -33,12 +42,15 @@ description: "GameObject component management. Use when users want to add, remov
 | `component_add` | `component_add_batch` | Adding to 2+ objects |
 | `component_remove` | `component_remove_batch` | Removing from 2+ objects |
 | `component_set_property` | `component_set_property_batch` | Setting on 2+ objects |
+| `component_set_serialized_property` | `component_set_serialized_property_batch` | Setting Inspector SerializedProperty paths |
 
 **Other Skills** (no batch):
 - `component_list` - List all components on an object
 - `component_get_properties` - Get component property values
 - `component_set_enabled` - Enable/disable a component (Behaviour, Renderer, Collider)
 - `component_copy` - Copy a component from one object to another
+- `component_get_serialized_properties` - List Inspector SerializedProperty paths
+- `component_copy_exact` - Copy a component and verify serialized fields match
 
 ---
 
@@ -61,11 +73,13 @@ Add a component to a GameObject.
 ### component_remove
 Remove a component from a GameObject.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | No* | GameObject name |
-| `instanceId` | int | No* | Instance ID |
-| `componentType` | string | Yes | Component type to remove |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | string | No* | - | GameObject name |
+| `instanceId` | int | No* | - | Instance ID |
+| `path` | string | No* | - | Hierarchy path |
+| `componentType` | string | Yes | - | Component type to remove |
+| `componentIndex` | int | No | 0 | Index into the components of that type when 2+ exist on the same object |
 
 **Returns**: `{success, gameObject, removed}` (`removed` is the requested `componentType` string)
 
@@ -127,6 +141,41 @@ Get all properties of a component.
 
 **Returns**: `{gameObject, component, fullTypeName, properties: [{name, type, fullType, value, canWrite}], fields: [{name, type, fullType, value, isSerializable}]}`
 
+### component_get_serialized_properties
+List Inspector serialized properties on a component via `SerializedObject`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | No* | GameObject name |
+| `instanceId` | int | No* | Instance ID |
+| `path` | string | No* | Hierarchy path |
+| `componentType` | string | Yes | Component type |
+| `includeChildren` | bool | No | Include nested properties |
+| `limit` | int | No | Max properties returned |
+
+**Returns**: `{success, gameObject, component, fullTypeName, properties}`
+
+### component_set_serialized_property
+Set an Inspector serialized property by `propertyPath`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `name` | string | No* | GameObject name |
+| `instanceId` | int | No* | Instance ID |
+| `path` | string | No* | Hierarchy path |
+| `componentType` | string | Yes | Component type |
+| `propertyPath` | string | Yes | SerializedProperty path, e.g. `items.Array.data[0]` |
+| `value` | string | Cond. | Primitive/vector/color/enum value |
+| `referenceName` | string | No | Scene object name for ObjectReference |
+| `referenceInstanceId` | int | No | Scene object instance ID for ObjectReference |
+| `referencePath` | string | No | Scene object path for ObjectReference |
+| `assetPath` | string | No | Project asset path for ObjectReference |
+| `objectType` | string | No | Expected object/component type for references |
+
+> Provide `value` for scalar properties, or a scene/project reference for ObjectReference fields.
+
+**Returns**: `{success, gameObject, component, propertyPath, valueSet}`
+
 ---
 
 ## Batch Skills
@@ -179,6 +228,16 @@ unity_skills.call_skill("component_set_property_batch", items=[
     {"name": "Enemy2", "componentType": "Rigidbody", "propertyName": "mass", "value": 2.0}
 ])
 ```
+
+### component_set_serialized_property_batch
+Set Inspector serialized properties on multiple components.
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | json string | Yes | - | JSON array of per-item objects |
+
+**Item properties**: `name`, `instanceId`, `path`, `componentType`, `propertyPath`, `value`, `referenceName`, `referenceInstanceId`, `referencePath`, `assetPath`, `objectType`
+
+**Returns**: `{success, totalItems, successCount, failCount, results}`
 
 ---
 
@@ -274,6 +333,21 @@ Copy a component from one GameObject to another.
 
 **Returns:** `{ success, source, target, componentType }`
 
+### `component_copy_exact`
+Copy a component from one GameObject to another and verify serialized Inspector fields match.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `sourceName` | string | No* | null | Source GameObject name |
+| `sourceInstanceId` | int | No* | 0 | Source Instance ID |
+| `sourcePath` | string | No* | null | Source hierarchy path |
+| `targetName` | string | No* | null | Target GameObject name |
+| `targetInstanceId` | int | No* | 0 | Target Instance ID |
+| `targetPath` | string | No* | null | Target hierarchy path |
+| `componentType` | string | Yes | - | Component type to copy |
+
+**Returns:** `{ success, source, target, componentType, verified, mismatchCount, mismatches? }`
+
 ### `component_set_enabled`
 Enable or disable a component (Behaviour, Renderer, Collider, etc.).
 
@@ -293,3 +367,14 @@ Enable or disable a component (Behaviour, Renderer, Collider, etc.).
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `TARGET_NOT_FOUND` | The GameObject, component type, component instance, property/field, or asset reference could not be located. | List components with `component_list`, resolve asset paths with `asset_find`, or verify the object with `gameobject_find` / `scene_get_hierarchy`. |
+| `MISSING_PARAM` | A required parameter is missing, such as `componentType` in `component_add` or `componentType`/`propertyName` in `component_set_property`. | Provide the missing parameter; use `mode=dryRun` to preview the required arguments. |
+| `SEMANTIC_INVALID` | A value is out of range or otherwise invalid, such as a `componentIndex` that exceeds the available components. | Adjust the value to fit the valid range or enum described in the error message. |
+| `SKILL_ERROR` | A runtime constraint blocked the operation, such as a read-only property or a component that cannot be removed because it is required. | Read the error message, resolve the underlying constraint (e.g., choose a writable property), then retry. |

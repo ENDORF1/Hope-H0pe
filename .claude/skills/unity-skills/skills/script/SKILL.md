@@ -1,7 +1,16 @@
 ---
 name: unity-script
-description: "C# script CRUD and analysis — create, read, replace, append, search, rename, move, delete Unity scripts and surface compile feedback / Domain Reload state. Triggers: script, C# code, csharp, MonoBehaviour, ScriptableObject, Editor, EditorWindow, namespace, class, create script, read script, write code, edit script, replace text, find in scripts, regex search, rename script, move script, append code, delete script, batch create, compile feedback, compile errors, Domain Reload, code generation, code template, script_create, script_create_batch, script_replace, script_append, script_read, script_rename, script_move, script_delete, script_get_compile_feedback, 脚本, C# 代码, 创建脚本, 批量创建, 读取脚本, 修改脚本, 替换脚本, 查找替换, 搜索脚本, 重命名脚本, 移动脚本, 追加代码, 删除脚本, 编写代码, 生成脚本, 代码模板, 编译反馈, 编译错误, 域重载, 重编译."
+description: Create, read and analyze C# scripts
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Authoring or editing C# code
+- Searching across scripts
+- Refactoring file layout
+- Checking compile errors
+- 编写或编辑 C# 代码、跨脚本搜索、重构文件布局、检查编译错误
 
 # Unity Script Skills
 
@@ -10,7 +19,7 @@ description: "C# script CRUD and analysis — create, read, replace, append, sea
 
 ## Operating Mode
 
-- **Approval**(默认): 只读类 skill（`script_read` / `script_list` / `script_find_in_file` / `script_get_info` / `script_get_compile_feedback`，标 `SkillMode.SemiAuto`）直接执行；写型 skill（`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_rename` / `script_move` / `script_delete`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
+- **Approval**: 只读类 skill（`script_read` / `script_list` / `script_find_in_file` / `script_get_info` / `script_get_compile_feedback`，标 `SkillMode.SemiAuto`）直接执行；写型 skill（`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_rename` / `script_move` / `script_delete`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
 - **Auto / Bypass**: 直接执行。
 - **本模块含 Delete / Reload 类高危 skill**：`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_delete` 会触发 Domain Reload（且多标 `RiskLevel=high`），`script_delete` 同时是 Delete 操作 —— 这些 skill 在 Approval / Auto 下被 `IsForbiddenInSemi` 自动拦截，**仅 Bypass 或 Allowlist 命中可执行**。
 
@@ -53,6 +62,8 @@ Create a C# script from template.
 | `folder` | string | No | "Assets/Scripts" | Save folder |
 | `template` | string | No | "MonoBehaviour" | Template type |
 | `namespaceName` | string | No | null | Optional namespace |
+| `checkCompile` | bool | No | true | Check compilation after create |
+| `diagnosticLimit` | int | No | 20 | Max compile diagnostics |
 
 **Templates**: MonoBehaviour, ScriptableObject, Editor, EditorWindow
 
@@ -116,6 +127,8 @@ Append content to a script.
 | `scriptPath` | string | Yes | - | Script path |
 | `content` | string | Yes | - | Content to append |
 | `atLine` | int | No | end | Line number to insert at |
+| `checkCompile` | bool | No | true | Check compilation after append |
+| `diagnosticLimit` | int | No | 20 | Max compile diagnostics |
 
 ### script_get_compile_feedback
 Get compile diagnostics related to one script.
@@ -245,3 +258,14 @@ Move a script to a new folder.
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `MISSING_PARAM` | A required parameter is missing, such as `scriptName` in `script_create` or `pattern` in `script_find_in_file`. | Supply the parameter named in the error; use `mode=dryRun` to see the schema. |
+| `SEMANTIC_INVALID` | The input violates a naming/path rule, such as `scriptName must not contain path separators`, `newName must not contain path separators`, or the script already exists. | Remove path separators, choose a unique name, or rename/move the existing file first. |
+| `TARGET_NOT_FOUND` | The script file, MonoScript, or target directory could not be found. | Verify the path with `asset_find` or `script_list`, then retry with the correct `scriptPath`. |
+| `SKILL_ERROR` | A filesystem operation failed, such as `Failed to delete script` or an AssetDatabase move/rename error. | Read the error details, resolve the underlying file/AssetDatabase issue, and retry. |

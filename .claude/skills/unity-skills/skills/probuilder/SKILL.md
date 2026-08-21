@@ -1,7 +1,15 @@
 ---
 name: unity-probuilder
-description: "ProBuilder editable mesh modeling for blockout and level geometry. Use when users want to create ProBuilder shapes, extrude faces, bevel edges, subdivide meshes, weld/move vertices, paint per-face materials, or run procedural mesh operations. Triggers: ProBuilder, ProBuilderMesh, mesh modeling, blockout, level geometry, shape, face, edge, vertex, extrude, bevel, chamfer, subdivide, weld, merge, bridge, flip normals, conform normals, project UV, 3D 建模, 建模, 拉伸, 挤出, 倒角, 细分, 焊接, 法线, 面, 边, 顶点, 关卡白模. Requires com.unity.probuilder package; missing-package calls return a diagnostic stub."
+description: Model editable meshes with ProBuilder for blockout
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Blocking out levels
+- Building or editing ProBuilder geometry
+- Prototyping shapes in-editor
+- 搭建关卡灰盒、创建或编辑 ProBuilder 几何体、在编辑器内快速搭形
 
 # Unity ProBuilder Skills
 

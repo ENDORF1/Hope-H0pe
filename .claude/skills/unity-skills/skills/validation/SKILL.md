@@ -1,7 +1,15 @@
 ---
 name: unity-validation
-description: "Project and scene health validation + cleanup helpers — find missing scripts / null references / non-convex MeshColliders / shader compilation errors / oversized textures / potentially unused assets, validate scene issues, remove missing-script placeholders, delete empty folders, get project structure overview. Triggers: validate, validation, health check, sanity check, project health, scene health, missing script, broken reference, null reference, missing prefab, duplicate names, empty folder, unused assets, oversized texture, large texture, non-convex collider, mesh collider performance, shader error, shader compile error, project structure, project overview, validate_scene, validate_find_missing_scripts, validate_fix_missing_scripts, validate_cleanup_empty_folders, validate_find_unused_assets, validate_texture_sizes, validate_project_structure, validate_missing_references, validate_mesh_collider_convex, validate_shader_errors, 验证, 校验, 健康检查, 项目健康, 场景健康, 丢失脚本, 缺失脚本, 引用检测, 空引用, 丢失引用, 重复命名, 空文件夹, 未使用资源, 冗余资源, 超大纹理, 非凸碰撞体, MeshCollider 性能, 着色器错误, Shader 编译错误, 项目结构, 项目概览, 预构建检查."
+description: Validate project and scene health plus cleanup
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Checking broken or missing references
+- Validating scene/project integrity
+- Cleaning up before a build
+- 检查断裂或丢失引用、校验场景/项目完整性、构建前清理
 
 # Unity Validation Skills
 
@@ -9,7 +17,7 @@ Maintain project health - find problems, clean up, and validate your Unity proje
 
 ## Operating Mode
 
-- **Approval**(默认): 只读分析 skill（`validate_scene` / `validate_find_missing_scripts` / `validate_find_unused_assets` / `validate_texture_sizes` / `validate_project_structure` / `validate_missing_references` / `validate_mesh_collider_convex` / `validate_shader_errors`，标 `SkillMode.SemiAuto`）直接执行；含 Delete 的 skill（`validate_cleanup_empty_folders` 标 `Analyze | Delete`、`validate_fix_missing_scripts` 标 `Execute | Delete`，默认 `SkillMode.FullAuto`）需用户 grant。
+- **Approval**: 只读分析 skill（`validate_scene` / `validate_find_missing_scripts` / `validate_find_unused_assets` / `validate_texture_sizes` / `validate_project_structure` / `validate_missing_references` / `validate_mesh_collider_convex` / `validate_shader_errors`，标 `SkillMode.SemiAuto`）直接执行；含 Delete 的 skill（`validate_cleanup_empty_folders` 标 `Analyze | Delete`、`validate_fix_missing_scripts` 标 `Execute | Delete`，默认 `SkillMode.FullAuto`）需用户 grant。
 - **Auto / Bypass**: 直接执行。
 - **本模块含 Delete 类高危 skill**：`validate_cleanup_empty_folders` / `validate_fix_missing_scripts` 一旦 `dryRun=false` 即真删；它们在 Approval / Auto 下被 `IsForbiddenInSemi` 自动拦截，**仅 Bypass 或 Allowlist 命中可执行**。**强烈建议先用 `dryRun=true` 预览**。
 

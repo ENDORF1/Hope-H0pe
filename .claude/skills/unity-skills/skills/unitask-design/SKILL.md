@@ -1,7 +1,16 @@
 ---
 name: unity-unitask-design
-description: "Source-anchored design rules for Cysharp UniTask 2.5.10 (Unity 2018.4+). Load before writing any async UniTask / UniTaskVoid / PlayerLoopTiming / CancellationToken / WhenAll / ToUniTask code to avoid double-await crashes, forgotten .Forget(), wrong PlayerLoopTiming choices, WebGL ThreadPool crashes, and handle leaks. Triggers: UniTask, UniTaskVoid, UniTaskCompletionSource, PlayerLoopTiming, async UniTask, Forget, WhenAll, WhenAny, UniTask.Yield, UniTask.Delay, UniTask.NextFrame, WaitForEndOfFrame, WaitForFixedUpdate, WaitUntil, WaitWhile, SwitchToMainThread, SwitchToThreadPool, GetCancellationTokenOnDestroy, CancellationTokenSourceExtensions, UniTaskAsyncEnumerable, AsyncReactiveProperty, ToUniTask, AsyncOperation, UnityWebRequest, UniTaskTracker, AttachExternalCancellation, AsyncTrigger, OnDestroyAsync, 异步任务, 不分配异步, 取消令牌, 任务取消, 玩家循环, 异步流, 零分配, async await unity, unity async, unity cancellation, unity coroutine alternative, zero allocation async."
+description: Source-anchored design rules for UniTask 2.5.10
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Writing or reviewing async UniTask code
+- Choosing PlayerLoopTiming
+- Handling CancellationToken
+- Composing WhenAll/WhenAny
+- 编写或审查 async UniTask 代码、选择 PlayerLoopTiming、处理 CancellationToken、组合 WhenAll/WhenAny
 
 # UniTask - Design Rules
 

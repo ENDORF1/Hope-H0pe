@@ -1,13 +1,21 @@
 ---
 name: unity-smart
-description: "AI-powered scene operations: SQL-like object queries, spatial queries, automatic spatial layout, alignment, distribution, snap to grid, randomize, replace prefabs, and reference auto-binding. Use when users want to find objects by property/region, arrange objects in grid/circle/line, align to ground, distribute evenly, snap, randomize, replace by prefab, or auto-wire serialized references. Triggers: smart, smart query, spatial query, scene query, layout, grid, circle, arc, linear, align to ground, distribute, snap to grid, randomize transform, replace objects, auto-bind, reference bind, select by component, 智能查询, 场景查询, 空间查询, 自动布局, 网格布局, 圆形布局, 对齐地面, 均匀分布, 网格吸附, 随机变换, 替换对象, 自动绑定, 按组件选择."
+description: AI-powered scene queries, layout and auto-binding. AI
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Querying scene objects by condition or proximity
+- Auto-arranging objects
+- Auto-wiring references
+- 按条件或邻近关系查询场景对象、自动排布对象、自动连线引用
 
 # Unity Smart Skills
 
 ## Operating Mode
 
-- **Approval**（默认）：本模块 Mixed —— 只读查询 skill `smart_scene_query` / `smart_scene_query_spatial`（标 `ReadOnly = true`, `Mode = SkillMode.SemiAuto`）可直接执行；其余布局/绑定/变换类 skill (`smart_scene_layout` / `smart_reference_bind` / `smart_align_to_ground` / `smart_distribute` / `smart_snap_to_grid` / `smart_randomize_transform` / `smart_select_by_component`) 为 `SkillMode.FullAuto`，需用户 grant 单次执行返结果。
+- **Approval**：本模块 Mixed —— 只读查询 skill `smart_scene_query` / `smart_scene_query_spatial`（标 `ReadOnly = true`, `Mode = SkillMode.SemiAuto`）可直接执行；其余布局/绑定/变换类 skill (`smart_scene_layout` / `smart_reference_bind` / `smart_align_to_ground` / `smart_distribute` / `smart_snap_to_grid` / `smart_randomize_transform` / `smart_select_by_component`) 为 `SkillMode.FullAuto`，需用户 grant 单次执行返结果。
 - **Auto / Bypass**：直接执行。
 - **含 NeverInSemi 高危 skill**：`smart_replace_objects`（Operation.Modify|Delete，会替换并删除原对象）。该 skill 在 Approval/Auto 下返 `MODE_FORBIDDEN`，仅 Bypass 或 Allowlist 命中可调。
 

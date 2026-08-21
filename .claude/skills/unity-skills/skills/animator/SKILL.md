@@ -1,7 +1,15 @@
 ---
 name: unity-animator
-description: "Unity Animator Controller editing and runtime parameter control: create controllers, add states/transitions/parameters, play animation states, drive triggers/floats/bools. Triggers: animation, animator, Animator Controller, controller, state, state machine, transition, layer, parameter, trigger, float, int, bool, blend tree, animation clip, exit time, has exit time, 动画, 动画控制器, 状态机, 状态, 状态转移, 转移, 图层, 参数, 触发器, 混合树, 动画片段."
+description: Edit Unity Animator Controllers and drive runtime parameters
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Setting up or wiring an Animator
+- Adjusting animation state machines
+- Driving animation parameters at runtime
+- 搭建或连接 Animator、调整动画状态机、运行时驱动动画参数
 
 # Unity Animator Skills
 
@@ -9,7 +17,7 @@ Control Unity's Mecanim system — create Animator Controllers, add layers' stat
 
 ## Operating Mode
 
-- **Approval**（默认）：查询类 skill（`animator_get_parameters` / `animator_get_info` / `animator_list_states`，源码标 `SkillMode.SemiAuto`）直接执行；其余变更类（create_controller / add_parameter / set_parameter / play / assign_controller / add_state / add_transition，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
+- **Approval**：查询类 skill（`animator_get_parameters` / `animator_get_info` / `animator_list_states`，源码标 `SkillMode.SemiAuto`）直接执行；其余变更类（create_controller / add_parameter / set_parameter / play / assign_controller / add_state / add_transition，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
 - **Auto / Bypass**：所有 skill 直接执行；Auto 走 AI 自我评估，Bypass 全放行。
 - 本模块**不含** Delete / PlayMode / Reload / 高危 skill，无 Bypass-only 拦截项。
 - `animator_set_parameter` / `animator_play` 作用于场景中已挂 Animator 的 GameObject；如果当前不在 Play mode，状态机只在 Editor 预览模式推进，效果与 runtime 不完全等价。

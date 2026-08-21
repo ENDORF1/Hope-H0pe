@@ -1,7 +1,15 @@
 ---
 name: unity-testability
-description: "Unity testability advisor. Use when users want to improve testability, isolate logic from MonoBehaviour, or plan EditMode/PlayMode tests. Triggers: testability, unit test, how to test, write tests, editmode test, playmode test, isolate logic, mock, 怎么测试, 写测试, 可测试, 测试性, 单元测试, 逻辑分离."
+description: Advise on Unity testability
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Improving testability
+- Extracting logic for unit tests
+- Planning a test strategy
+- 提升可测试性、为单元测试抽取逻辑、规划测试策略
 
 # Unity Testability Advisor
 

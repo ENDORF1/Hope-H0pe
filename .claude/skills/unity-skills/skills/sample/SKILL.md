@@ -1,7 +1,15 @@
 ---
 name: unity-sample
-description: "Sample/demo skills for API connectivity testing and beginner examples — create primitive cubes/spheres, move/rotate/scale by name, delete by name, simple scene info. Use for smoke tests, health checks, and demo flows; not for production work. Triggers: sample, demo, example, hello, ping, smoke test, connectivity, create cube, create sphere, primitive, 示例, 演示, 测试, 烟雾测试, 入门, 连通性, 健康检查, demo skill."
+description: Sample and demo skills for API connectivity testing
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Testing REST server reachability
+- Smoke-testing connectivity
+- Trying a first call
+- 测试 REST 服务可达性、冒烟测试连通性、试发第一个调用
 
 # Sample Skills
 

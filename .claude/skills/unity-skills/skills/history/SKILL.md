@@ -1,7 +1,15 @@
 ---
 name: unity-history
-description: "Undo/redo history management (Unity Editor native undo stack). Use when users want to undo or redo one or many steps, or get current undo group name. Triggers: history, undo, redo, undo steps, redo steps, undo history, revert, previous state, current undo group, 历史, 撤销, 重做, 多步撤销, 多步重做, 撤销历史, 上一步, 当前撤销组."
+description: Manage undo/redo history over the native undo stack
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Reviewing or navigating undo history
+- Stepping undo/redo
+- Auditing what changed
+- 查看或浏览撤销历史、逐步撤销/重做、审查改动
 
 # History Skills
 
@@ -9,7 +17,7 @@ Manage Unity Editor undo/redo history.
 
 ## Operating Mode
 
-本模块全部 3 个 skill (`history_undo` / `history_redo` / `history_get_current`) 均标 `SkillMode.SemiAuto`，Approval / Auto / Bypass 三档下都可直接执行。**不含 NeverInSemi 高危 skill**。
+本模块 `history_get_current`（纯读）标 `SkillMode.SemiAuto`，三档下均可直接执行；`history_undo` / `history_redo` 会改变场景状态，为默认 `SkillMode.FullAuto`（Operation=Execute），Approval 模式下需 grant。**不含 NeverInSemi 高危 skill**。
 
 **DO NOT** (common hallucinations):
 - `history_list` / `history_get` do not exist → use `history_get_current` for current undo group

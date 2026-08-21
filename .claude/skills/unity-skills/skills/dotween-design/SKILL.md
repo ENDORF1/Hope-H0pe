@@ -1,7 +1,16 @@
 ---
 name: unity-dotween-design
-description: "Source-anchored design rules for DOTween 1.3.015 (Unity 2018+). Load before writing any DOTween.Init / DOMove / Sequence.Append / SetLoops / SetLink / AsyncWaitForCompletion / ToUniTask code to avoid missing-target NRE, tween leaks, Safe Mode false positives, autoKill confusion, module compile errors. Triggers: DOTween, DOMove, DORotate, DOScale, DOColor, DOFade, DOShakePosition, DOShakeRotation, DOPath, DOPunchScale, DOJump, DOLocalMove, DOAnchorPos, DOSizeDelta, Sequence, Tweener, TweenerCore, SetEase, SetDelay, SetLoops, SetAutoKill, SetLink, SetUpdate, SetId, SetTarget, SetRelative, SetSnapping, SetRecyclable, OnComplete, OnKill, OnStart, OnUpdate, OnStepComplete, AsyncWaitForCompletion, AsyncWaitForKill, AsyncWaitForRewind, ToUniTask, DOVirtual, PathType, PathMode, LoopType, UpdateType, DOTweenComponent, DOTweenSettings, 补间动画, 序列动画, 缓动曲线, 生命周期绑定, 动画回调, DOTween init, tween lifecycle, safe mode, tween capacity, kill target."
+description: Source-anchored design rules for DOTween 1.3.015
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Writing or reviewing DOTween code
+- Building sequences
+- Binding tween lifetime
+- Debugging tween pitfalls
+- 编写或审查 DOTween 代码、构建序列动画、绑定补间生命周期、排查补间陷阱
 
 # DOTween - Design Rules
 

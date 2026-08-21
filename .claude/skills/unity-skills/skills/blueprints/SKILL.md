@@ -1,7 +1,15 @@
 ---
 name: unity-blueprints
-description: "Mini-game architecture blueprint advisor. Use when users want a starting structure for a small Unity game — platformer, shooter, runner, puzzle, tower defense, clicker, card game. Triggers: blueprint, game template, game structure, prototype, gameplay loop, how to start a game, platformer, tower defense, 游戏模板, 小游戏架构, 做个游戏, 从零开始, 平台跳跃, 塔防, 卡牌, 游戏框架."
+description: Advise on starter architecture blueprints for small games
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Starting a small game from scratch
+- Scaffolding a genre core structure
+- Organizing a specific game type
+- 从零开始做小游戏、搭建某类型核心结构、组织特定玩法
 
 # Unity Gameplay Blueprints
 

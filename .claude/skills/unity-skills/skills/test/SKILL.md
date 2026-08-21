@@ -1,7 +1,16 @@
 ---
 name: unity-test
-description: "Unity Test Runner async operations — run / discover / list / cancel tests, poll job results, create EditMode/PlayMode test templates, list categories, run skills smoke regression. All run/discover skills are job-based: they return jobId immediately and you poll with test_get_result / test_discover_get_result. Triggers: test, unit test, automated test, integration test, test runner, NUnit, EditMode, PlayMode, edit mode test, play mode test, run tests, run all tests, run by name, run by category, list tests, discover tests, test categories, test result, test status, async test, poll test result, jobId, job poll, async job, cancel test, abort test, create test template, EditMode template, PlayMode template, smoke test, regression test, skill smoke, test summary, last test result, test_run, test_run_by_name, test_get_result, test_get_last_result, test_list, test_list_categories, test_discover_start, test_discover_get_result, test_cancel, test_create_editmode, test_create_playmode, test_smoke_skills, test_get_summary, 测试, 单元测试, 集成测试, 自动化测试, 测试运行, 测试运行器, 运行测试, 跑测试, 异步测试, 测试发现, 列出测试, 测试分类, 取消测试, 中止测试, 测试结果, 轮询结果, 任务 ID, 编辑模式测试, 运行时测试, 烟雾测试, 回归测试, 创建测试模板, 测试模板, 最近测试结果, 测试汇总."
+description: Run Unity Test Runner operations asynchronously
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Running EditMode/PlayMode tests
+- Discovering or listing tests
+- Polling async test results
+- Scaffolding test files
+- 运行 EditMode/PlayMode 测试、发现或列出测试、轮询异步测试结果、生成测试文件
 
 # Test Skills
 
@@ -9,7 +18,7 @@ Run and manage Unity tests.
 
 ## Operating Mode
 
-- **Approval**(默认): 只读 skill（`test_get_result` / `test_list` / `test_discover_get_result` / `test_get_last_result` / `test_list_categories` / `test_smoke_skills` / `test_get_summary`，标 `SkillMode.SemiAuto`）直接执行；执行/发现/创建型 skill（`test_run` / `test_run_by_name` / `test_discover_start` / `test_cancel` / `test_create_editmode` / `test_create_playmode`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果（job 立即排进队列）。
+- **Approval**: 只读 skill（`test_get_result` / `test_list` / `test_discover_get_result` / `test_get_last_result` / `test_list_categories` / `test_smoke_skills` / `test_get_summary`，标 `SkillMode.SemiAuto`）直接执行；执行/发现/创建型 skill（`test_run` / `test_run_by_name` / `test_discover_start` / `test_cancel` / `test_create_editmode` / `test_create_playmode`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果（job 立即排进队列）。
 - **Auto / Bypass**: 直接执行。
 - **本模块有 4 个 NeverInSemi skill**（按 `IsForbiddenInSemi` 自动判定）：
   - `MayEnterPlayMode = true`: `test_run`、`test_run_by_name`
@@ -52,7 +61,7 @@ Get the result of a test run.
 **Parameters:**
 - `jobId` (string, required): Job ID from `test_run` / `test_run_by_name`.
 
-**Returns:** `{ success, jobId, status, totalTests, passedTests, failedTests, skippedTests, inconclusiveTests, otherTests, failedTestNames, elapsedSeconds, resultSummary, error }`
+**Returns:** `{ success, jobId, status, totalTests, passedTests, failedTests, skippedTests, inconclusiveTests, otherTests, failedTestNames, failedTestDetails, elapsedSeconds, resultSummary, error }` — each failure detail includes `name`, `resultState`, `message`, `stackTrace`, `durationSeconds`, and `output`.
 
 ### `test_cancel`
 Cancel a running test job if supported (Unity TestRunner has no hard cancel — best-effort).

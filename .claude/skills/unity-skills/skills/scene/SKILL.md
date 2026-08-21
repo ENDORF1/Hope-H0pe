@@ -1,7 +1,16 @@
 ---
 name: unity-scene
-description: "Unity scene management. Use when users want to create, load (single or additive), save, unload, switch active scene, get scene info or hierarchy, capture screenshot, or search objects in scene. Triggers: scene, new scene, create scene, load scene, save scene, additive scene, unload scene, multi-scene, active scene, scene hierarchy, hierarchy tree, screenshot, game view screenshot, scene find objects, 场景, 新建场景, 创建场景, 加载场景, 保存场景, 加性加载, 卸载场景, 多场景, 活动场景, 场景层级, 层级树, 截图, 截屏, 场景查找对象."
+description: Manage Unity scenes
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Opening or saving scenes
+- Loading additively
+- Switching active scene
+- Querying scene contents
+- 打开或保存场景、叠加加载、切换活动场景、查询场景内容
 
 # Unity Scene Skills
 
@@ -9,7 +18,7 @@ Control Unity scenes - the containers that hold all your GameObjects.
 
 ## Operating Mode
 
-- **Approval**（默认）：本模块 Mixed —— `scene_get_info` / `scene_get_hierarchy` / `scene_get_loaded` / `scene_find_objects` 标 `SkillMode.SemiAuto`，可直接执行；`scene_screenshot` / `scene_unload` / `scene_set_active` 未设 Mode 字段（默认 FullAuto），Approval 模式下需 grant。
+- **Approval**：本模块 Mixed —— `scene_get_info` / `scene_get_hierarchy` / `scene_get_loaded` / `scene_find_objects` 标 `SkillMode.SemiAuto`，可直接执行；`scene_screenshot` / `scene_unload` / `scene_set_active` 未设 Mode 字段（默认 FullAuto），Approval 模式下需 grant。
 - **Auto / Bypass**：FullAuto 直接执行。
 - **含 NeverInSemi 高危 skill**：`scene_create` / `scene_load` / `scene_save`（标 `RiskLevel="high"`，因为切换/覆盖整个场景文件影响范围极大）。这些在 Approval/Auto 下返 `MODE_FORBIDDEN`，仅 Bypass 或 Allowlist 命中可调。
 
@@ -21,7 +30,7 @@ Control Unity scenes - the containers that hold all your GameObjects.
 **Routing**:
 - For detailed hierarchy tree → use `perception` module's `hierarchy_describe`
 - For scene statistics → use `perception` module's `scene_summarize`
-- For screenshot → `scene_screenshot` (this module) or `camera_screenshot` (camera module, SkillMode.FullAuto)
+- For screenshot → `scene_screenshot` (this module) captures the **Game View** final composited image (all cameras + UI; in Play mode this is the live runtime frame); `camera_screenshot` (camera module, SkillMode.FullAuto) renders a single Game Camera off-screen
 
 ## Skills Overview
 
@@ -81,13 +90,21 @@ Get full scene hierarchy tree.
 **Returns**: `{success, hierarchy: [{name, instanceId, children: [...]}]}`
 
 ### scene_screenshot
-Capture a screenshot.
+Capture a screenshot of the **Game View** — the final composited frame of all cameras + UI. In Play mode this is the live runtime image, **not** the Scene/editor view. For a single Game Camera's render use `camera_screenshot` instead.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `filename` | string | No | "screenshot.png" | Output filename |
+| `filename` | string | No | "screenshot.png" | Bare filename only (no path separators); saved under `Assets/Screenshots/` |
 | `width` | int | No | 1920 | Image width |
 | `height` | int | No | 1080 | Image height |
+| `returnImage` | bool | No | false | Also return a PNG as base64 in the response (`imageBase64`), for clients without filesystem access |
+| `maxDimension` | int | No | 1280 | Only used when `returnImage=true`; downscales the returned image (not the saved file) so its longer edge is ≤ this value. Clamped to 256–4096 |
+
+**Returns**: `{success, path, width, height, isPlaying, note}`. `isPlaying` indicates whether the frame is a live runtime image (Play mode) or a static Edit-mode frame. Adds `{imageBase64, imageWidth, imageHeight, imageBytes}` when `returnImage=true`. If the base64 payload would exceed 8MB, the skill returns an error asking for a smaller `maxDimension` — the file at `path` is still saved.
+
+**Async**: `ScreenCapture.CaptureScreenshot` writes the PNG ~1 frame later. If reading `path` immediately fails, wait ~200ms and retry. `returnImage` does **not** read that file back — since it isn't written yet — it instead does a separate synchronous capture of the Game View's current backbuffer (`ScreenCapture.CaptureScreenshotAsTexture`), so the returned image may be a moment older than the file eventually written to `path`.
+
+**returnImage usage tip:** a local agent that can read files (e.g. Claude Code against a local Unity Editor) should generally omit `returnImage` and just read the PNG at `path` once it's written — it's cheaper on tokens. Use `returnImage=true` for remote/MCP clients that have no filesystem access to the Unity project.
 
 ### scene_get_loaded
 Get list of all currently loaded scenes.
@@ -158,8 +175,19 @@ unity_skills.call_skill("scene_screenshot", filename="preview.png", width=1920, 
 2. Use additive loading for UI overlays
 3. Keep scene hierarchy organized with empty parent objects
 4. Use `scene_get_info` to verify scene state
-5. Screenshots are saved to project root by default
+5. Screenshots are saved under `Assets/Screenshots/` (filename is a bare name; any path separators are stripped)
 
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `TARGET_NOT_FOUND` | The requested scene is not found or not currently loaded (e.g., `Scene not found`, `Scene is not loaded`). | Verify the scene path with `asset_find` or list loaded scenes with `scene_get_loaded`, then retry. |
+| `MISSING_PARAM` | A required parameter is missing, such as `scenePath` for `scene_create`, or the current scene has no save path. | Provide `scenePath` or save the scene once before the operation. |
+| `SEMANTIC_INVALID` | An invalid tag or component type was passed to `scene_find_objects`. | Use a valid tag or component type name, and consider `gameobject_find` for more complex filters. |
+| `SKILL_ERROR` | A state constraint blocked the operation, such as attempting to unload the only loaded scene. | Adjust the request to a valid editor state (e.g., keep at least one scene loaded). |

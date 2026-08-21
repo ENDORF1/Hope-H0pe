@@ -1,7 +1,15 @@
 ---
 name: unity-script-roles
-description: "Script role planner for Unity. Use when users want to decide class responsibilities — which should be MonoBehaviour, ScriptableObject, pure C# service, or installer. Triggers: script roles, class roles, what should be MonoBehaviour, service class, presenter, installer, responsibility, 脚本职责, 类的职责, 用MonoBehaviour还是纯C#, 怎么分类, 职责划分."
+description: Advise on assigning Unity script roles
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Deciding a class's role
+- Splitting responsibilities across types
+- Choosing between MonoBehaviour and plain C#
+- 确定类的职责、在类型间拆分职责、在 MonoBehaviour 与纯 C# 间抉择
 
 # Unity Script Roles
 

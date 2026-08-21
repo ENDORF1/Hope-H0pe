@@ -1,7 +1,15 @@
 ---
 name: unity-adr
-description: "Architecture decision record helper for Unity projects. Use when users compare options, choose between approaches, or need to lock in a design choice. Triggers: ADR, architecture decision, tradeoff, which approach, compare options, choose pattern, pros and cons, 技术选型, 方案对比, 选哪个, 设计决策, 架构决策, 优缺点对比."
+description: Record Unity architecture decisions (ADR) with rationale
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Choosing between technical approaches
+- Comparing libraries or patterns
+- Documenting design rationale
+- 技术方案选型、库/模式对比、记录设计决策来龙去脉
 
 # Unity ADR
 

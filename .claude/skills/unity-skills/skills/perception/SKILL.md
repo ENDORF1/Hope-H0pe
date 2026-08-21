@@ -1,7 +1,15 @@
 ---
 name: unity-perception
-description: "Read-only scene + project + script analysis for AI coding context — scene health, summary, hotspots, hierarchy describe, component stats, tag/layer usage, materials/shaders, contract validation, spatial query, dependency graph, project stack detection, full scene context export, markdown scene report, snapshot diff, performance hints. Triggers: scene summary, scene analyze, scene overview, scene health, scene context, scene snapshot, scene diff, scene compare, hierarchy tree, hierarchy describe, hotspot, deep hierarchy, large group, component statistics, tag layer stats, material overview, shader overview, scene contract, scene convention, spatial query, find near object, project stack, render pipeline detect, package detect, performance hints, optimization hints, script analyze, script API, script dependency, dependency graph, impact analysis, what depends on, safe to delete, refactoring impact, export scene report, save scene markdown, scene_summarize, scene_analyze, scene_health_check, scene_context, scene_export_report, scene_dependency_analyze, script_dependency_graph, script_analyze, project_stack_detect, hierarchy_describe, 场景摘要, 场景分析, 场景概览, 场景统计, 场景健康, 场景体检, 场景诊断, 场景快照, 场景对比, 层级树, 层级描述, 热点检测, 深层级, 大群组, 组件统计, 标签层统计, 材质概览, 着色器概览, 场景规范, 默认根, 空间查询, 半径搜索, 项目栈检测, 渲染管线检测, 包检测, 性能提示, 优化建议, 脚本 API 分析, 脚本依赖, 依赖图, 影响分析, 谁依赖, 安全删除, 重构影响, 导出场景报告, 场景 Markdown 报告."
+description: Read-only scene, project and script analysis for AI context
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Gathering context before editing
+- Understanding unfamiliar scene/project
+- Auditing structure without changes
+- 编辑前收集上下文、理解陌生场景或项目、在不改动的前提下审查结构
 
 # Unity Perception Skills
 
@@ -9,8 +17,8 @@ Use this module for read-only scene and project analysis.
 
 ## Operating Mode
 
-- **Approval / Auto / Bypass**: 本模块所有 skill（`scene_analyze` / `scene_summarize` / `scene_health_check` / `scene_component_stats` / `scene_find_hotspots` / `scene_tag_layer_stats` / `scene_performance_hints` / `scene_diff` / `hierarchy_describe` / `scene_context` / `scene_dependency_analyze` / `scene_spatial_query` / `scene_materials` / `scene_contract_validate` / `project_stack_detect` / `script_analyze` / `script_dependency_graph` / `scene_export_report`）都标 `Mode = SkillMode.SemiAuto`，三档模式下直接执行无需 grant。其中前 17 个同时标 `ReadOnly = true`。
-- **特别说明**：`scene_export_report` 写 markdown 文件到磁盘（`Operation = Analyze | Execute`，未标 `ReadOnly`），但仍标了 `SkillMode.SemiAuto`，Approval 模式可直接执行。
+- **Approval / Auto / Bypass**: 本模块 18 个 skill 里的 17 个纯读 skill（`scene_analyze` / `scene_summarize` / `scene_health_check` / `scene_component_stats` / `scene_find_hotspots` / `scene_tag_layer_stats` / `scene_performance_hints` / `scene_diff` / `hierarchy_describe` / `scene_context` / `scene_dependency_analyze` / `scene_spatial_query` / `scene_materials` / `scene_contract_validate` / `project_stack_detect` / `script_analyze` / `script_dependency_graph`）都标 `Mode = SkillMode.SemiAuto` 且 `ReadOnly = true`，三档模式下直接执行无需 grant。
+- **特别说明**：`scene_export_report` 写 markdown 文件到磁盘（`Operation = Analyze | Execute`，标 `MutatesAssets = true`），因此**不是** SemiAuto——它走默认 `SkillMode.FullAuto`，Approval 模式下需要 grant 才能执行。
 - **本模块不含 Delete / PlayMode / Reload / RiskLevel=high 类 skill** —— 没有 `IsForbiddenInSemi` 拦截。
 
 **DO NOT** (common hallucinations):

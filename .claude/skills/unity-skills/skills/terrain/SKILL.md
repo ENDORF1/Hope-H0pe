@@ -1,7 +1,15 @@
 ---
 name: unity-terrain
-description: "Unity Terrain operations: create TerrainData, sculpt heights, paint texture layers, smooth/flatten regions, generate Perlin landscapes, add hills. Use when users want to create terrain, set heights, paint textures, smooth or sculpt landscapes. Triggers: terrain, Terrain, TerrainData, heightmap, height map, landscape, sculpt, paint, splat, brush, hill, plateau, Perlin, perlin noise, procedural terrain, smooth, flatten, texture layer, terrain layer, 地形, 高度图, 地图, 山, 山丘, 平原, 高原, 涂刷, 纹理绘制, 程序地形, 柏林噪声, 雕刻."
+description: Operate on Unity Terrain
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Creating or editing terrain
+- Sculpting or smoothing heightmap
+- Painting terrain texture layers
+- 创建或编辑地形、雕刻或平滑高度图、绘制地形纹理层
 
 # Unity Terrain Skills
 

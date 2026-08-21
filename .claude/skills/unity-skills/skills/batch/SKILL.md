@@ -1,7 +1,15 @@
 ---
 name: unity-batch
-description: "Batch query, preview-confirm-execute, async job orchestration, and bulk scene cleanup for UnitySkills. Use when users want a unified batch query (gameobjects/components/assets), preview before mutation (rename/set property/replace material/missing scripts/standardize naming/render layer/cleanup temp), execute with confirmToken, manage async jobs (status/progress/wait/logs/list/cancel), inspect or list reports, retry failed items, or validate scene objects. Triggers: batch, preview, dry-run, confirmToken, execute batch, batch report, batch retry, job, jobId, async job, job status, job progress, job wait, job logs, job cancel, query gameobjects, query components, query assets, batch rename, batch set property, batch replace material, batch fix missing scripts, batch standardize naming, batch set render layer, batch cleanup temp, batch validate scene, 批处理, 批量, 预览执行, 确认令牌, 异步作业, 作业状态, 作业进度, 作业等待, 作业日志, 作业取消, 批量查询, 批量重命名, 批量改属性, 批量换材质, 修复缺失脚本, 规范命名, 清理临时对象, 场景校验."
+description: Unified batch and async-job orchestration
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Operating on many objects at once
+- Running or polling long async jobs
+- Preview-then-commit bulk edits
+- 一次性操作大量对象、运行或轮询长时异步任务、先预览后提交的批量编辑
 
 # Unity Batch Skills
 
@@ -123,12 +131,11 @@ List recent batch reports.
 | `limit` | int | No | 20 | Max reports returned |
 
 ### job_status
-Get status for an asynchronous UnitySkills job. Supports `recentCount` query param (1–200, default 10) to include the last N `progressEvents` in the response as `recentProgress`.
+Get status for an asynchronous UnitySkills job.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `jobId` | string | Yes | - | Job identifier |
-| `recentCount` | int | No | 10 | Number of recent progress events to include in `recentProgress` |
 
 ### job_progress
 Get fine-grained progress events for a job via incremental polling. Use `offset` to fetch only new events since the last call (pass previous `totalCount` as next `offset`).
@@ -158,12 +165,18 @@ List recent UnitySkills jobs.
 | `limit` | int | No | 20 | Max jobs returned |
 
 ### job_wait
-Wait for a UnitySkills job to finish or until `timeoutMs` elapses.
+Wait for a UnitySkills job to finish or until `timeoutMs` elapses. **Blocks the Unity main thread** while waiting, so `timeoutMs` is clamped server-side to `[0, 2000]` regardless of the value you pass — a 10000/60000 request will actually wait at most 2s.
+
+For job kinds whose progress depends on Unity's own engine loop rather than this plugin's own pump (`compile`, `package`, `test`, `playmode`, `play_capture`, `build_player`), blocking this thread cannot make them advance — Unity's compiler/domain-reload, PackageManager Request resolution, TestRunner callbacks, PlayMode state machine, and BuildPipeline all need the main thread free to tick. For those kinds `job_wait` **does not enter a wait loop**: it returns the current snapshot immediately with `waitNotSupported: true` and a `hint` pointing at the non-blocking alternatives below. Self-driven kinds (batch executor jobs such as `rename` / `set_property` / `replace_material` / `set_render_layer` / `cleanup_temp_objects` / `fix_missing_scripts` / `standardize_naming`, and `test_smoke`) still block up to the clamped timeout since each `job_wait` tick genuinely advances their state.
+
+**Recommended pattern for compile/package/test/playmode/play_capture/build_player jobs**: poll `GET /jobs/{id}` (served off the HTTP thread, safe to call every 200-500ms) or long-poll `GET /events` — neither goes through the main-thread skill queue, so they stay responsive even while a job is mid-flight.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `jobId` | string | Yes | - | Job identifier |
-| `timeoutMs` | int | No | 10000 | Wait timeout in milliseconds |
+| `timeoutMs` | int | No | 10000 | Wait timeout in milliseconds; clamped to `[0, 2000]` |
+
+Response adds `terminal` (bool) and `waitNotSupported` (bool) to the fields listed under job_status; `hint` is populated only when `waitNotSupported` is true.
 
 ### job_cancel
 Cancel a UnitySkills job if the job supports cancellation.

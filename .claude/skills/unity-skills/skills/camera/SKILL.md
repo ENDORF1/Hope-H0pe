@@ -1,7 +1,15 @@
 ---
 name: unity-camera
-description: "Unity Scene View + Game Camera control. Use when users want to move/rotate the editor view, create or configure scene cameras, change FOV / clip planes / culling mask, switch orthographic vs perspective, or capture a screenshot. Triggers (EN): Unity camera, scene camera, Game Camera, Scene View, viewport, FOV, field of view, near/far clip, culling mask, orthographic, perspective, look at, align view, screenshot, render to file. Triggers (ZH): 相机, 摄像机, 视角, 视野, 场景视图, 游戏相机, 截图, 渲染截图, 正交, 透视, 裁剪面, 剔除遮罩."
+description: Control Unity Scene View and Game cameras
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Framing the Scene View
+- Creating or adjusting cameras
+- Tweaking FOV or clipping planes
+- 取景 Scene View、创建或调整相机、修改 FOV 或裁剪面
 
 # Camera Skills
 
@@ -9,7 +17,7 @@ Control the Scene View camera and Game Cameras (creation, transform, properties,
 
 ## Operating Mode
 
-- **Approval** (default): mutating skills (`camera_set_transform`, `camera_create`, `camera_set_properties`, `camera_set_culling_mask`, `camera_screenshot`, `camera_set_orthographic`, `camera_align_view_to_object`, `camera_look_at`) need user grant; grant triggers a single server-side execution that returns the result.
+- **Approval** (default): mutating skills (`camera_set_transform`, `camera_create`, `camera_set_properties`, `camera_set_culling_mask`, `camera_screenshot`, `camera_sceneview_screenshot`, `camera_set_orthographic`, `camera_align_view_to_object`, `camera_look_at`) need user grant; grant triggers a single server-side execution that returns the result.
 - **Auto / Bypass**: those skills execute directly.
 - Query skills (`camera_get_info`, `camera_get_properties`, `camera_list`) are `SkillMode.SemiAuto` — they run in all three modes without grant.
 - This module contains **no** Delete / PlayMode / Reload / high-risk skills (no NeverInSemi).
@@ -25,7 +33,7 @@ Control the Scene View camera and Game Cameras (creation, transform, properties,
 **Routing**:
 - For Cinemachine virtual cameras → use `cinemachine` module
 - For Game Camera component properties → `camera_set_properties` / `camera_get_properties` (this module)
-- For scene screenshots → `scene_screenshot` (scene module) uses the Scene View; `camera_screenshot` uses a Game Camera
+- For screenshots → three options: `scene_screenshot` (scene module) = the **Game View** final composite (all cameras + UI; Play mode = live runtime frame); `camera_screenshot` (this module) = a **single Game Camera** off-screen render; `camera_sceneview_screenshot` (this module) = the **editor Scene View** (developer viewport, incl. grid/gizmos)
 
 ## Skills
 
@@ -120,8 +128,24 @@ Capture a screenshot from a Game Camera to file.
 | name | string | No | null | Name of the camera GameObject |
 | instanceId | int | No | 0 | Instance ID of the camera GameObject |
 | path | string | No | null | Hierarchy path of the camera GameObject |
+| returnImage | bool | No | false | Also return the PNG as base64 in the response (`imageBase64`), for clients without filesystem access |
+| maxDimension | int | No | 1280 | Only used when `returnImage=true`; downscales the returned image (not the saved file) so its longer edge is ≤ this value. Clamped to 256–4096 |
 
-**Returns:** `{ success, path, width, height }`
+**Returns:** `{ success, path, width, height }`, plus `{ imageBase64, imageWidth, imageHeight, imageBytes }` when `returnImage=true`. If the base64 payload would exceed 8MB, the skill returns an error asking for a smaller `maxDimension` — the file at `path` is still saved.
+
+### `camera_sceneview_screenshot`
+Capture the **editor Scene View** (the developer's editing viewport — can overlook the whole scene incl. off-camera objects). Distinct from `scene_screenshot` (Game View / player camera) and `camera_screenshot` (one Game Camera). By default captures the full Scene View incl. grid/gizmos/selection (on-screen read); auto-falls back to a clean offscreen render if the editor build lacks the internal API. The Scene View window must be open and visible for the overlay capture.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| filename | string | No | "sceneview.png" | Bare filename only (no path separators); saved under `Assets/Screenshots/` |
+| includeOverlays | bool | No | true | True = full Scene View with grid/gizmos/selection (falls back to a clean render if unsupported); false = clean offscreen scene render only |
+| returnImage | bool | No | false | Also return the PNG as base64 in the response (`imageBase64`), for clients without filesystem access |
+| maxDimension | int | No | 1280 | Only used when `returnImage=true`; downscales the returned image (not the saved file) so its longer edge is ≤ this value. Clamped to 256–4096 |
+
+**Returns:** `{ success, path, width, height, mode, note }` — `mode` is `"screen_with_overlays"` or `"offscreen_clean"` — plus `{ imageBase64, imageWidth, imageHeight, imageBytes }` when `returnImage=true`. If the base64 payload would exceed 8MB, the skill returns an error asking for a smaller `maxDimension` — the file at `path` is still saved.
+
+**returnImage usage tip:** a local agent that can read files (e.g. Claude Code against a local Unity Editor) should generally omit `returnImage` and just read the PNG at `path` — it's cheaper on tokens. Use `returnImage=true` for remote/MCP clients that have no filesystem access to the Unity project.
 
 ### `camera_set_orthographic`
 Switch Game Camera between orthographic and perspective mode.

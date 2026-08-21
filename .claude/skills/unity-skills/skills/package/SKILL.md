@@ -1,7 +1,16 @@
 ---
 name: unity-package
-description: "Unity Package Manager (UPM) operations and bundled helpers for Cinemachine / Splines. Use when users want to install, remove, refresh, search, or inspect packages, list dependencies, query versions, or run a one-call Cinemachine/Splines bootstrap. Triggers: package, packages, UPM, Package Manager, manifest, install, add, remove, uninstall, refresh, dependency, dependencies, version, versions, Cinemachine, Splines, TextMeshPro, 包, 包管理, Package Manager, UPM, 安装包, 移除包, 卸载, 依赖, 版本, 包依赖, 包清单."
+description: Manage Unity Package Manager (UPM) packages
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Adding or removing UPM packages
+- Checking installed versions
+- Searching the registry
+- Scripting package operations
+- 添加或移除 UPM 包、检查已装版本、搜索 registry、脚本化包操作
 
 # Package Skills
 
@@ -19,7 +28,7 @@ Manage installed Unity packages and package-related helper flows such as Cinemac
 - `package_add` / `package_update` do not exist -> use `package_install`
 - `package_get_info` does not exist -> use `package_list`, `package_check`, `package_get_dependencies`, or `package_get_versions`
 - `package_search` searches the installed package cache only; it does not query the Unity Registry
-- `package_list`, `package_search`, `package_get_dependencies`, and `package_get_versions` can return "Package list not ready" until `package_refresh` completes
+- Package query skills initialize their cache automatically after Domain Reload. During the short cold-start window they return `{ success: false, status: "refreshing", cacheReady: false, retryStrategy: "wait_and_retry", retryAfterSeconds: 2 }`; retry instead of treating this as `installed=false`.
 - Package install/remove/refresh jobs can trigger package import and Domain Reload; expect transient server unavailability and use returned job IDs
 
 **Routing**:

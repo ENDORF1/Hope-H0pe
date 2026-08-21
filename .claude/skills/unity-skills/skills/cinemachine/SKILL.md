@@ -1,7 +1,15 @@
 ---
 name: unity-cinemachine
-description: "Cinemachine Virtual Camera setup and configuration for cinematic / gameplay cameras: VCam, FreeLook, ClearShot, StateDriven, Sequencer, MixingCamera, Body/Aim/Noise pipeline, Impulse system, target groups, splines, blends, CinemachineBrain. Triggers: cinemachine, virtual camera, vcam, CinemachineBrain, brain, FreeLook, ClearShot, StateDriven, Sequencer, MixingCamera, follow, look at, dolly, spline, target group, Body, Aim, Noise, OrbitalFollow, ThirdPersonFollow, PositionComposer, FramingTransposer, RotationComposer, Composer, PanTilt, POV, blend, impulse, shake, confiner, deoccluder, 虚拟相机, 跟随, 轨道, 镜头, 混合, 抖动, 相机模糊."
+description: Set up Cinemachine Virtual Cameras
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Creating or tuning Cinemachine cameras
+- Configuring follow/look-at/noise
+- Building cinematic camera behavior
+- 创建或调校 Cinemachine 相机、设置跟随/注视/噪声、构建运镜效果
 
 # Cinemachine Skills
 
@@ -9,7 +17,7 @@ Control Cinemachine Virtual Cameras and brain settings. Works with Cinemachine *
 
 ## Operating Mode
 
-- **Approval**（默认）：查询类 skill（`cinemachine_inspect_vcam` / `cinemachine_list_components` / `cinemachine_get_brain_info`，源码标 `SkillMode.SemiAuto`）直接执行；其余配置/创建类（`cinemachine_create_vcam` / `cinemachine_set_targets` / `cinemachine_set_lens` / `cinemachine_configure_body` / `cinemachine_configure_aim` 等，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
+- **Approval**：查询类 skill（`cinemachine_inspect_vcam` / `cinemachine_list_components` / `cinemachine_get_brain_info`，源码标 `SkillMode.SemiAuto`）直接执行；其余配置/创建类（`cinemachine_create_vcam` / `cinemachine_set_targets` / `cinemachine_set_lens` / `cinemachine_configure_body` / `cinemachine_configure_aim` 等，标 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
 - **Auto / Bypass**：未被禁列表拦截的 skill 直接执行。
 - 本模块**含 Delete 类 skill**：`cinemachine_set_component`（替换/移除 pipeline component）、`cinemachine_target_group_remove_member`、`cinemachine_remove_extension` 标记为 `SkillOperation.Delete`，被 `IsForbiddenInSemi` 静态拦截 —— 仅 **Bypass** 模式或加入 **Allowlist** 才能调用。
 - **包依赖**：必须安装 `com.unity.cinemachine` 包（CM 2.x 或 3.x）。未安装时所有 skill 返回 `{ error = "Cinemachine 未安装..." }` 的 stub —— 调用方应先用 `package_*` 系列 skill 确认安装状态。
@@ -158,9 +166,15 @@ Create a Cinemachine Mixing Camera.
 ### `cinemachine_mixing_camera_set_weight`
 Set the weight of a child camera within a Mixing Camera.
 **Parameters:**
-- `mixerName` (string): Name of the Mixing Camera.
-- `childName` (string): Name of the child VCam.
-- `weight` (float): Weight value (usually 0.0 to 1.0).
+- `mixerName` (string, optional): Name of the Mixing Camera.
+- `mixerInstanceId` (int, optional): Mixing Camera instance ID.
+- `mixerPath` (string, optional): Mixing Camera hierarchy path.
+- `mixerEntityId` (string, optional): Mixing Camera entity ID (Unity 6000.4+, preferred).
+- `childName` (string, optional): Name of the child VCam.
+- `childInstanceId` (int, optional): Child VCam instance ID.
+- `childPath` (string, optional): Child VCam hierarchy path.
+- `childEntityId` (string, optional): Child VCam entity ID (Unity 6000.4+, preferred).
+- `weight` (float): Weight value, usually 0.0–1.0 (default 1).
 
 ### `cinemachine_create_clear_shot`
 Create a Cinemachine Clear Shot Camera.
@@ -176,11 +190,17 @@ Create a Cinemachine State Driven Camera.
 ### `cinemachine_state_driven_camera_add_instruction`
 Add a state mapping instruction to a State Driven Camera.
 **Parameters:**
-- `cameraName` (string): Name of the State Driven Camera.
+- `cameraName` (string, optional): Name of the State Driven Camera.
+- `cameraInstanceId` (int, optional): State Driven Camera instance ID.
+- `cameraPath` (string, optional): State Driven Camera hierarchy path.
+- `cameraEntityId` (string, optional): State Driven Camera entity ID (Unity 6000.4+, preferred).
 - `stateName` (string): Name of the animation state (e.g., "Run").
-- `childCameraName` (string): Name of the child VCam to activate for this state.
-- `minDuration` (float, optional): Minimum duration in seconds.
-- `activateAfter` (float, optional): Delay in seconds before activation.
+- `childCameraName` (string, optional): Name of the child VCam to activate for this state.
+- `childInstanceId` (int, optional): Child VCam instance ID.
+- `childPath` (string, optional): Child VCam hierarchy path.
+- `childEntityId` (string, optional): Child VCam entity ID (Unity 6000.4+, preferred).
+- `minDuration` (float, optional): Minimum duration in seconds (default 0).
+- `activateAfter` (float, optional): Delay in seconds before activation (default 0).
 
 ### `cinemachine_set_noise`
 Configure Noise settings (Basic Multi Channel Perlin).
@@ -225,15 +245,19 @@ Create a Sequencer camera (CM3) or BlendList camera (CM2) that plays child camer
 ### `cinemachine_sequencer_add_instruction`
 Add a child camera instruction to a Sequencer/BlendList camera.
 **Parameters:**
-- `sequencerName` (string, optional): Sequencer camera name. Provide one of name/instanceId/path.
+- `sequencerName` (string, optional): Sequencer camera name.
 - `sequencerInstanceId` (int, optional): Sequencer Instance ID.
 - `sequencerPath` (string, optional): Sequencer hierarchy path.
-- `childCameraName` (string, optional): Child VCam name. Provide one of name/instanceId/path.
+- `sequencerEntityId` (string, optional): Sequencer entity ID (Unity 6000.4+, preferred).
+- `childCameraName` (string, optional): Child VCam name.
 - `childInstanceId` (int, optional): Child VCam Instance ID.
 - `childPath` (string, optional): Child VCam hierarchy path.
+- `childEntityId` (string, optional): Child VCam entity ID (Unity 6000.4+, preferred).
 - `hold` (float): Duration to hold on this child in seconds (default `2`).
 - `blendStyle` (string): Blend style to use entering this child (default `EaseInOut`).
 - `blendTime` (float): Blend duration in seconds (default `2`).
+
+Provide at least one identifier for each of sequencer and child camera.
 
 ### `cinemachine_create_freelook`
 Create a FreeLook camera. CM2 uses `CinemachineFreeLook`; CM3 builds `CinemachineCamera` + `OrbitalFollow(ThreeRing)` + `RotationComposer`.

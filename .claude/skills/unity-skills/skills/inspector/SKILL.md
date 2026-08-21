@@ -1,7 +1,15 @@
 ---
 name: unity-inspector
-description: "Unity Inspector design advisor. Use when users want better SerializeField usage, Tooltip/Header organization, validation, or cleaner Inspector UX. Triggers: Inspector, SerializeField, Tooltip, Header, Range, OnValidate, RequireComponent, CreateAssetMenu, Inspector design, show in Inspector, 检视面板, Inspector怎么设计, 序列化字段, 编辑器显示, 显示在Inspector."
+description: Advise on Unity Inspector authoring UX
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Designing component Inspector display
+- Organizing serialized fields
+- Adding tooltips/headers
+- 设计组件在 Inspector 的呈现、组织序列化字段、添加提示/分组
 
 # Unity Inspector Design
 

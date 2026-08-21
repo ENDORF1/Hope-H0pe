@@ -1,7 +1,16 @@
 ---
 name: unity-architecture
-description: "Gameplay and system architecture advisor for Unity. Use when users want module boundaries, scene design, SOLID structure, decoupling, or refactoring direction before writing code. Triggers: architecture, system design, how to structure, how to organize, module boundary, decouple, refactor, SOLID, 架构设计, 怎么组织代码, 模块划分, 代码结构, 解耦, 重构方向, 系统设计."
+description: Advise on Unity gameplay and system architecture
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Planning code organization
+- Splitting responsibilities
+- Reducing coupling
+- Choosing refactor direction
+- 规划代码结构、划分职责、降低耦合、确定重构方向
 
 # Unity Architecture Advisor
 

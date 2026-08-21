@@ -1,7 +1,15 @@
 ---
 name: unity-dotween
-description: "DOTween Free/Pro automation. Free skills probe install status, read/validate/configure DOTweenSettings, list modules and shortcut extension methods, and generate runtime tween / Sequence / lifetime-safe MonoBehaviour scripts. Pro skills (`dotween_pro_*`) add/configure/inspect `DG.Tweening.DOTweenAnimation` components on scene objects, including stagger/cascade entrance. Triggers: DOTween, DOTweenFree, DOTweenPro, DOTweenAnimation, DOTweenSettings, DG.Tweening, tween, Sequence, ease, easing, OutQuad, OutBack, loops, Yoyo, stagger, cascade, DOMove, DOLocalMove, DORotate, DOScale, DOAnchorPos, DOFade, DOColor, DOPunchPosition, DOShakePosition, SetLink, autoKill, SafeMode, UI animation, UI 动画, 补间动画, 补间, 缓动, 缓动函数, 动画配置, 循环, 序列, 动效, 脚本生成, 错峰动画."
+description: Automate DOTween Free/Pro at editor time
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Setting up DOTween
+- Validating install/modules
+- Configuring DOTweenAnimation components
+- 接入 DOTween、校验安装/模块、配置 DOTweenAnimation 组件
 
 # DOTween Skills
 
@@ -79,7 +87,7 @@ Add one DOTweenAnimation to a GameObject and configure all core fields.
 
 ### `dotween_pro_batch_add_animation`
 Add the same animation to multiple GameObjects.
-**Parameters:** `targetsJson` (JSON string array) + all params of `dotween_pro_add_animation`.
+**Parameters:** `targetsJson` (JSON string array) + all params of dotween_pro_add_animation.
 
 ### `dotween_pro_stagger_animations`
 Batch-add with incrementing delay — UI cascade entrance pattern.
@@ -119,3 +127,8 @@ Remove one DOTweenAnimation component by index.
 | `Color / CameraBackgroundColor` | `endValueColor` (`"#FF8800"` or `"1,0.5,0,1"`) |
 | `Text` | `endValueString` |
 | `UIRect` | `endValueRect` (`"x,y,width,height"`) |
+
+---
+## Exact Signatures
+
+Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.

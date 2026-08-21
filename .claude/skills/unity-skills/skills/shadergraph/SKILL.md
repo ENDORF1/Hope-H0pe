@@ -1,7 +1,15 @@
 ---
 name: unity-shadergraph
-description: "Shader Graph asset creation, structure inspection, constrained blackboard editing, and constrained node-subset editing for `.shadergraph` / `.shadersubgraph`. Use when users want to create graphs, inspect real node/slot structure, edit properties or keywords, or perform safe low-level node operations. Triggers: Shader Graph, shadergraph, sub graph, blackboard property, shader keyword, node editing, slot connect, 着色图, 子图, ShaderGraph 属性, ShaderGraph 节点, ShaderGraph 连线."
+description: Create and inspect Shader Graph assets
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Creating a Shader Graph
+- Inspecting graph structure
+- Making controlled blackboard/node edits
+- 创建 Shader Graph、检查其结构、对黑板/节点做受控编辑
 
 # ShaderGraph Skills
 

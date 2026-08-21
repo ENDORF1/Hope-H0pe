@@ -1,7 +1,15 @@
 ---
 name: unity-xr
-description: "XR Interaction Toolkit (XRI) skills for VR/AR development. Use when users want to set up XR rigs, add grab/socket/ray interactors, attach grab interactables, configure teleportation, continuous locomotion, snap/smooth turn, XR-aware Canvas/EventSystem, haptics, InteractionLayerMask, or diagnose XR scenes. Triggers: XR, XRI, XR Interaction Toolkit, VR, AR, XR Origin, XR Rig, XRRayInteractor, XRDirectInteractor, XRSocketInteractor, XRGrabInteractable, XRSimpleInteractable, TeleportationProvider, TeleportationArea, TeleportationAnchor, ContinuousMoveProvider, SnapTurnProvider, ContinuousTurnProvider, XRUIInputModule, TrackedPoseDriver, grab, teleport, hand tracking, controller, interactor, interactable, locomotion, haptics, InteractionLayerMask, 抓取, 传送, 手柄, 头盔, 虚拟现实, 增强现实, XR 交互, XR 设置. Requires com.unity.xr.interaction.toolkit; reflection-based bridge supports XRI 2.x (Unity 2022) and XRI 3.x (Unity 6+). Missing-package calls return a diagnostic stub."
+description: Set up XR Interaction Toolkit (XRI) for VR/AR
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Building VR/AR interaction
+- Setting up an XR rig
+- Configuring grab/socket/ray interactors
+- 构建 VR/AR 交互、搭建 XR rig、配置抓取/插槽/射线交互器
 
 # Unity XR Interaction Toolkit Skills
 

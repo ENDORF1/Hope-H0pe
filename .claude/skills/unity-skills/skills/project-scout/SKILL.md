@@ -1,7 +1,15 @@
 ---
 name: unity-project-scout
-description: "Unity project reconnaissance advisor. Load this FIRST in existing projects before proposing architecture changes — inspects Unity version, packages, asmdefs, folders, coding patterns. Triggers: inspect project, scout project, project baseline, analyze project, what does this project use, existing codebase, 项目分析, 项目结构, 看看项目, 分析项目, 现有架构, 项目用了什么."
+description: Advise on reconnoitering an existing Unity project
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- First approaching an unfamiliar project
+- Before proposing structural changes
+- Auditing existing setup
+- 初次接触陌生项目、在提结构性改动前、盘点现有配置
 
 # Unity Project Scout
 

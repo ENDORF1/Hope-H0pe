@@ -1,7 +1,15 @@
 ---
 name: unity-importer
-description: "Asset import settings — texture, audio, model importers + sprite settings + per-platform overrides + reimport. Use when users want to configure import settings, change texture type/maxSize/compression/filter/mipmap/sRGB/wrap, audio loadType/compressionFormat/quality/forceToMono, model scale/meshCompression/animationType/rig/clip splits, sprite PPU/mode, per-platform overrides, or reimport assets. Triggers: import, importer, import settings, reimport, AssetImporter, TextureImporter, ModelImporter, AudioImporter, FBX, AudioClip, sprite, PPU, pixelsPerUnit, textureType, NormalMap, Sprite, maxSize, filterMode, mipmap, sRGB, compression, loadType, Streaming, DecompressOnLoad, CompressedInMemory, Vorbis, ADPCM, PCM, animationType, Humanoid, Generic, meshCompression, generateSecondaryUV, materialImportMode, platform override, Standalone, iPhone, Android, WebGL, 导入设置, 纹理设置, 模型设置, 音频设置, 重新导入, 重导入, 压缩, 法线贴图, 精灵, 平台覆盖."
+description: Configure asset import settings
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Adjusting how assets import
+- Setting texture compression or sprite modes
+- Applying per-platform overrides
+- 调整资源导入方式、设置贴图压缩或 Sprite 模式、应用分平台覆盖
 
 # Unity Importer Skills
 

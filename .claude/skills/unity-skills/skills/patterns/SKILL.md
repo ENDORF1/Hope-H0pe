@@ -1,7 +1,15 @@
 ---
 name: unity-patterns
-description: "Unity design pattern selector. Use when users want advice on ScriptableObject, events, state machines, object pools, observer, or other patterns. Triggers: design pattern, which pattern, ScriptableObject, event channel, observer, state machine, object pool, singleton, service locator, 设计模式, 用什么模式, 事件系统, 状态机, 对象池, 观察者模式, 该用什么模式."
+description: Advise on choosing Unity design patterns
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Deciding which pattern fits a problem
+- Structuring decoupled systems
+- Choosing event/state-machine/pool approaches
+- 判断哪种模式适合某问题、构建解耦系统、在事件/状态机/对象池方案间抉择
 
 # Unity Pattern Selector
 

@@ -1,7 +1,15 @@
 ---
 name: unity-cleaner
-description: "Project cleanup and audit utilities — find unused assets, content-hash duplicates, missing script/asset references, empty folders, large assets, and dependency trees; delete via a two-step confirm-token flow; fix missing-script components in-place. Use when users want to clean up, audit, or shrink the project. Triggers: cleaner, cleanup, clean up, unused asset, unused assets, duplicate, duplicates, dead code, orphan, missing script, missing reference, empty folder, large asset, dependency tree, asset usage, fix missing, 清理, 项目清理, 冗余, 未使用, 重复文件, 丢失脚本, 缺失引用, 空文件夹, 大文件, 依赖, 依赖树, 资产清理, 减包."
+description: Clean up and audit a Unity project
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Reducing project bloat
+- Hunting duplicate or orphaned assets
+- Auditing before a release
+- 给项目瘦身、排查重复或孤立资源、发布前审计
 
 # Unity Cleaner Skills
 

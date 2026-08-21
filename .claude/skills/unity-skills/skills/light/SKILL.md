@@ -1,7 +1,15 @@
 ---
 name: unity-light
-description: "Unity lighting / scene lights / reflection probes / light probe groups. Use when users want to create or configure Unity Directional / Point / Spot / Area lights, batch-toggle scene lights, place reflection probes, place light probe grids, or inspect Lightmap baking settings. Triggers (EN): Unity light, scene light, directional light, point light, spot light, area light, intensity, shadows, light range, light color, reflection probe, light probe group, lightmap, baked GI. Triggers (ZH): 灯光, 光源, 光照, 阴影, 方向光, 点光源, 聚光灯, 面光源, 反射探针, 光照探针, 烘焙, 全局光照, 实时光, GI."
+description: Create and configure Unity lights
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Adding or tuning lights
+- Setting up scene lighting
+- Batch-enabling/disabling lights
+- 添加或调校灯光、布置场景照明、批量开关灯光
 
 # Unity Light Skills
 
@@ -110,11 +118,14 @@ unity_skills.call_skill("light_set_properties_batch", items=[
 ### light_set_enabled
 Enable or disable a light.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `name` | string | No* | Light object name |
-| `instanceId` | int | No* | Instance ID |
-| `enabled` | bool | Yes | Enable state |
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `name` | string | No* | - | Light object name |
+| `instanceId` | int | No* | - | Instance ID |
+| `path` | string | No* | - | Hierarchy path |
+| `enabled` | bool | No | `true` | Enable state |
+
+**Returns**: `{success, name, enabled}`
 
 ### light_set_enabled_batch
 Enable or disable multiple lights.

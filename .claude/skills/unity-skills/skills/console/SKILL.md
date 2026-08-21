@@ -1,7 +1,16 @@
 ---
 name: unity-console
-description: "Unity Editor console log capture, query, write and settings. Read existing console history, start/stop capture buffer, log custom messages, clear console, configure error-pause / collapse / clear-on-play, export to file, count by type. Triggers: console, console window, log, logs, warning, error, exception, assert, print, debug message, capture logs, start capture, stop capture, export logs, log file, error pause, pause on error, collapse logs, clear on play, log statistics, console_start_capture, console_stop_capture, console_get_logs, console_clear, console_log, console_export, console_get_stats, console_set_pause_on_error, console_set_collapse, console_set_clear_on_play, 控制台, Unity 控制台, 日志, 警告, 错误, 异常, 输出, 打印日志, 捕获日志, 开始捕获, 停止捕获, 导出日志, 清空控制台, 写日志, 自定义日志, 暂停于错误, 错误暂停, 折叠日志, 进入运行时清空."
+description: Capture and query the Unity Editor console
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Inspecting console output
+- Filtering errors or warnings
+- Emitting log messages
+- Configuring the console
+- 查看控制台输出、过滤错误或警告、输出日志、配置控制台
 
 # Unity Console Skills
 
@@ -9,7 +18,7 @@ Work with the Unity console - capture logs, write messages, and debug your proje
 
 ## Operating Mode
 
-- **Approval**(默认): 只读 skill（`console_get_logs` / `console_get_stats`，标 `SkillMode.SemiAuto`）直接执行；其余 skill（`console_start_capture` / `console_stop_capture` / `console_clear` / `console_log` / `console_export` / `console_set_pause_on_error` / `console_set_collapse` / `console_set_clear_on_play`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后一步执行返结果。
+- **Approval**: 只读 skill（`console_get_logs` / `console_get_stats`，标 `SkillMode.SemiAuto`）直接执行；其余 skill（`console_start_capture` / `console_stop_capture` / `console_clear` / `console_log` / `console_export` / `console_set_pause_on_error` / `console_set_collapse` / `console_set_clear_on_play`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后一步执行返结果。
 - **Auto / Bypass**: 直接执行。
 - **本模块不含 Delete / PlayMode / Reload / RiskLevel=high 类 skill** —— 没有 `IsForbiddenInSemi` 拦截，不需要 Bypass 才能跑的高危操作。
 

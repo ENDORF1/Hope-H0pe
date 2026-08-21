@@ -1,7 +1,16 @@
 ---
 name: unity-performance
-description: "Unity performance red-flag advisor. Use when users want performance review, code runs slow, frame drops, or need optimization guidance for Update, allocations, pooling, physics. Triggers: performance, optimize, slow, lag, frame drop, hot path, Update, allocation, pool, GC, profiler, 性能, 太慢了, 卡顿, 掉帧, 优化性能, 热路径, 内存分配, 对象池."
+description: Advise on Unity performance red flags
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Reviewing performance
+- Diagnosing frame drops
+- Reducing allocations
+- Planning pooling/optimization
+- 做性能审查、诊断掉帧或卡顿、减少内存分配、规划对象池/优化
 
 # Unity Performance Red Flags
 
