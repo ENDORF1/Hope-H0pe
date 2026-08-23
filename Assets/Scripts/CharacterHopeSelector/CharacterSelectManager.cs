@@ -72,9 +72,6 @@ public class CharacterSelectManager : MonoBehaviour
     [Tooltip("战斗场景名称")]
     public string battleSceneName = "Battle Scene";
 
-    [Tooltip("选中后到切换场景的延迟（秒）")]
-    public float sceneLoadDelay = 2.3f; // 卡飞完 1.25s + 黑屏留 1s
-
     // ─────────────────────────────────────────────────
     // 运行时
     // ─────────────────────────────────────────────────
@@ -285,32 +282,66 @@ public class CharacterSelectManager : MonoBehaviour
             _cards[i].PlayDismiss(delay: i * 0.025f);
         }
 
-        // 选中卡：翻回卡背
-        clicked.FlipToBack(() =>
-        {
-            // 翻面完成，等 0.25s 让玩家看清卡背，再开始黑屏
-            DOVirtual.DelayedCall(0.25f, () =>
-            {
-                if (transitionOverlay != null)
-                {
-                    transitionOverlay.blocksRaycasts = true;
-                    transitionOverlay.DOFade(1f, 0.4f).OnComplete(() =>
-                    {
-                        clicked.PlayExitWithTrail();
-                    });
-                }
-                else
-                {
-                    clicked.PlayExit();
-                }
-            });
-        });
+        StartCoroutine(PlayExitAndLoadBattle(clicked));
+    }
 
-        // 切换场景
-        DOVirtual.DelayedCall(sceneLoadDelay, () =>
+    /// <summary>
+    /// 选卡退场与战场加载并行：动画走自己的完成回调，
+    /// 只有异步加载尚未就绪时才亮起 ENTERING BATTLE，不加硬等待。
+    /// </summary>
+    private IEnumerator PlayExitAndLoadBattle(CharacterCardUI clicked)
+    {
+        var loadOp = SceneManager.LoadSceneAsync(battleSceneName);
+        if (loadOp == null)
         {
-            SceneManager.LoadScene(battleSceneName);
-        });
+            Debug.LogError($"[CharacterSelect] 无法加载场景：{battleSceneName}");
+            yield break;
+        }
+        loadOp.allowSceneActivation = false;
+
+        bool flipped = false;
+        clicked.FlipToBack(() => flipped = true);
+        yield return new WaitUntil(() => flipped);
+
+        // 翻面完成后稍停，让玩家看清卡背（演出节拍，不是加载门闩）
+        yield return new WaitForSeconds(0.25f);
+
+        if (transitionOverlay != null)
+        {
+            transitionOverlay.blocksRaycasts = true;
+            bool overlayDone = false;
+            transitionOverlay.DOFade(1f, 0.4f).OnComplete(() => overlayDone = true);
+            yield return new WaitUntil(() => overlayDone);
+
+            bool trailDone = false;
+            clicked.PlayExitWithTrail(() => trailDone = true);
+            yield return new WaitUntil(() => trailDone);
+        }
+        else
+        {
+            bool exitDone = false;
+            clicked.PlayExit(() => exitDone = true);
+            yield return new WaitUntil(() => exitDone);
+        }
+
+        yield return WaitForLoadIfNeeded(loadOp);
+
+        loadOp.allowSceneActivation = true;
+        yield return loadOp;
+    }
+
+    /// <summary>
+    /// 加载已到可激活点则立刻放行；否则才淡入 ENTERING BATTLE，并等到真正就绪。
+    /// </summary>
+    private IEnumerator WaitForLoadIfNeeded(AsyncOperation loadOp)
+    {
+        if (loadOp == null || loadOp.progress >= 0.9f)
+            yield break;
+
+        if (transitionText != null)
+            transitionText.DOFade(1f, 0.25f);
+
+        yield return new WaitUntil(() => loadOp.progress >= 0.9f);
     }
 
     // ─────────────────────────────────────────────────
